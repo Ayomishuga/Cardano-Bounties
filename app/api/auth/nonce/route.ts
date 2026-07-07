@@ -37,7 +37,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         } else {
             const { error } = await supabaseAdmin
             .from('users')
-            .insert({ stake_address: address, nonce, nonce_expires_at, role: 'user' })
+            .insert({ stake_address: address, nonce, nonce_expires_at, role: 'contributor' })
 
             if (error) {
                 return NextResponse.json({ error: error.message }, { status: 500 })
