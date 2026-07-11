@@ -23,6 +23,9 @@ type Bounty = {
   project_name?: string | null;
   project_logo_url?: string | null;
   bounty_instructions?: string | null;
+  payout_type?: string | null;
+  max_winners?: number | null;
+  prize_structure?: Array<{ rank: number; amount_lovelace: number }> | null;
   projects?: {
     name?: string | null;
     logo_url?: string | null;
@@ -68,6 +71,16 @@ function getDeadlineLabel(value: string | null) {
   if (days === 0) return "Due today";
   if (days <= 7) return `${days} days left`;
   return "Open";
+}
+
+function getBountyStatusLabel(status: string | null | undefined, deadline: string | null) {
+  if (status === "in_review") return "In review";
+  if (status === "open") return getDeadlineLabel(deadline);
+  return normalizeStatus(status || "Unavailable");
+}
+
+function isAcceptingContributions(status: string | null | undefined) {
+  return status === "open";
 }
 
 function splitBrief(description: string) {
@@ -151,16 +164,17 @@ export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
     [bounty?.bounty_instructions],
   );
   const submissions = bounty?.submissions || [];
+  const acceptsContributions = isAcceptingContributions(bounty?.status);
   const detailTabs = useMemo(
     () =>
       [
         { id: "brief", label: "Brief" },
         { id: "instructions", label: "Instructions" },
         { id: "contributions", label: `Contributions (${submissions.length})` },
-        { id: "submit", label: "Submit work" },
+        { id: "submit", label: acceptsContributions ? "Submit work" : "Review status" },
         { id: "details", label: "Details" },
       ] satisfies { id: DetailTab; label: string }[],
-    [submissions.length],
+    [acceptsContributions, submissions.length],
   );
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, currentIndex: number) {
@@ -183,6 +197,11 @@ export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
     event.preventDefault();
     setSubmissionError("");
     setSubmissionSuccess("");
+
+    if (!acceptsContributions) {
+      setSubmissionError("This bounty is in review and is no longer accepting contributions.");
+      return;
+    }
 
     if (!connected || !address) {
       setSubmissionError("Connect a wallet before submitting a contribution.");
@@ -287,25 +306,58 @@ export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
                 <p>{briefSections[0] || bounty.description}</p>
                 <div className={styles.heroActions}>
                   <Link href="/explore">Back to explore</Link>
-                  <a href="#bounty-details-tabs" onClick={() => setActiveTab("brief")}>
-                    Read brief
+                  <a href="#bounty-details-tabs" onClick={() => setActiveTab(acceptsContributions ? "submit" : "details")}>
+                    {acceptsContributions ? "Submit work" : "View review status"}
                   </a>
                 </div>
               </div>
 
               <aside className={styles.summaryCard} aria-label="Bounty summary">
                 <div>
-                  <span>Reward</span>
+                  <span>{bounty.payout_type === "equal_split" ? `Reward pool (${bounty.max_winners ?? 2} winners)` : bounty.payout_type === "manual_split" ? `Prize pool (${bounty.max_winners ?? 2} winners)` : "Reward"}</span>
                   <strong>{formatAda(bounty.reward_amount)}</strong>
                 </div>
+
+                {/* Payout type badge */}
+                {bounty.payout_type && bounty.payout_type !== "single" && (
+                  <div style={{ paddingTop: 0, paddingBottom: 0 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--blue)" }}>
+                      {bounty.payout_type === "equal_split" ? "Equal split" : "Ranked prizes"}
+                    </span>
+                  </div>
+                )}
+
+                {/* Prize breakdown table for manual_split */}
+                {bounty.payout_type === "manual_split" && bounty.prize_structure && bounty.prize_structure.length > 0 && (
+                  <div style={{ display: "grid", gap: 6 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted)" }}>Prize breakdown</span>
+                    {bounty.prize_structure.map((p) => {
+                      const RANK_EMOJI: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
+                      const emoji = RANK_EMOJI[p.rank] ?? `#${p.rank}`;
+                      const ada = (p.amount_lovelace / 1_000_000).toLocaleString("en-US", { maximumFractionDigits: 6 });
+                      return (
+                        <div key={p.rank} style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                          <span>{emoji} {p.rank === 1 ? "1st" : p.rank === 2 ? "2nd" : p.rank === 3 ? "3rd" : `${p.rank}th`} place</span>
+                          <strong>{ada} ADA</strong>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
                 <div>
                   <span>Deadline</span>
                   <strong>{formatDate(bounty.deadline)}</strong>
                 </div>
                 <div>
                   <span>Status</span>
-                  <strong>{getDeadlineLabel(bounty.deadline)}</strong>
+                  <strong>{getBountyStatusLabel(bounty.status, bounty.deadline)}</strong>
                 </div>
+                {!acceptsContributions ? (
+                  <div className={styles.reviewStatusNotice}>
+                    <span>Submissions closed</span>
+                    <strong>This bounty is in review and no longer accepting contributions.</strong>
+                  </div>
+                ) : null}
                 <button
                   type="button"
                   className={styles.submitWorkButton}
@@ -317,7 +369,7 @@ export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
                     }
                   }}
                 >
-                  Submit Work
+                  {acceptsContributions ? "Submit Work" : "View Review Status"}
                 </button>
               </aside>
             </div>
@@ -432,13 +484,21 @@ export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
                   <div className={styles.submitGrid}>
                     <div className={styles.submitPanel}>
                       <div className={styles.sectionHeader}>
-                        <span>Submit work</span>
-                        <h2>Send a contribution for review</h2>
+                        <span>{acceptsContributions ? "Submit work" : "Review status"}</span>
+                        <h2>{acceptsContributions ? "Send a contribution for review" : "This bounty is in review"}</h2>
                         <p>
-                          Connect your wallet, then submit a link and reviewer notes. Until signed verification is
-                          added, the connected wallet address is used as the contributor identity.
+                          {acceptsContributions
+                            ? "Connect your wallet, then submit a link and reviewer notes. Until signed verification is added, the connected wallet address is used as the contributor identity."
+                            : "The submission window has closed. Existing contributions are being reviewed and payout allocations are being prepared."}
                         </p>
                       </div>
+
+                      {!acceptsContributions ? (
+                        <div className={styles.reviewClosedPanel} role="status">
+                          <strong>No new contributions can be submitted.</strong>
+                          <span>You can still read the bounty details and track existing contribution statuses.</span>
+                        </div>
+                      ) : null}
 
                       {submissionSuccess ? (
                         <div className={styles.submissionSuccess} role="status">
@@ -452,6 +512,7 @@ export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
                         </div>
                       ) : null}
 
+                      {acceptsContributions ? (
                       <form className={styles.submitForm} onSubmit={handleContributionSubmit}>
                         <div className={styles.submitField}>
                           <label htmlFor="contribution-link">Contribution link</label>
@@ -490,6 +551,7 @@ export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
                           </span>
                         </div>
                       </form>
+                      ) : null}
                     </div>
 
                     <aside className={styles.submitGuidance}>

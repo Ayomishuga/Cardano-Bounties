@@ -19,6 +19,8 @@ type Bounty = {
   status?: string | null;
   project_name?: string | null;
   project_logo_url?: string | null;
+  payout_type?: string | null;
+  max_winners?: number | null;
   projects?: {
     name?: string | null;
     logo_url?: string | null;
@@ -109,6 +111,15 @@ function getDeadlineState(value: string | null) {
   if (days === 0) return "Due today";
   if (days <= 7) return `${days}d left`;
   return "Open";
+}
+
+function getBountyState(bounty: Bounty) {
+  if (bounty.status === "in_review") return "In review";
+  return getDeadlineState(bounty.deadline);
+}
+
+function isBountyInReview(bounty: Bounty) {
+  return bounty.status === "in_review";
 }
 
 function getProjectName(bounty: Bounty) {
@@ -223,18 +234,18 @@ export function ExploreBountiesPage() {
         <div className={`container ${styles.exploreHeroGrid}`}>
           <div className={styles.exploreHeroCopy}>
             <span className="eyebrow">
-              <i /> Open contribution board
+              <i /> Contribution board
             </span>
             <h1>Explore live bounties</h1>
             <p>
-              Find open tasks across engineering, design, content, research, and community work.
-              Choose a bounty that matches your skillset and contribute where the ecosystem needs help.
+              Find active and in-review tasks across engineering, design, content, research, and community work.
+              Open bounties accept contributions; in-review bounties remain visible for transparency.
             </p>
           </div>
 
           <div className={styles.exploreSummary} aria-label="Bounty board summary">
             <div>
-              <span>Open bounties</span>
+              <span>Visible bounties</span>
               <strong>{isLoading ? "--" : pagination.total}</strong>
             </div>
             <div>
@@ -336,10 +347,15 @@ export function ExploreBountiesPage() {
             <>
               <div className={styles.bountyGrid}>
                 {bounties.map((bounty) => (
-                  <article className={styles.bountyCard} id={bounty.id} key={bounty.id}>
+                  <article className={`${styles.bountyCard} ${isBountyInReview(bounty) ? styles.bountyCardInReview : ""}`} id={bounty.id} key={bounty.id}>
                     <div className={styles.bountyCardTop}>
                       <span>{normalizeType(bounty.type)}</span>
-                      <b>{getDeadlineState(bounty.deadline)}</b>
+                      {bounty.payout_type && bounty.payout_type !== "single" && (
+                        <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--blue)", background: "rgba(1,81,194,0.08)", padding: "2px 7px", borderRadius: 999 }}>
+                          {bounty.payout_type === "equal_split" ? "Split" : "Ranked"}
+                        </span>
+                      )}
+                      <b>{getBountyState(bounty)}</b>
                     </div>
                     <div className={styles.projectIdentity}>
                       <span aria-hidden="true" className={styles.projectLogo}>
@@ -358,9 +374,14 @@ export function ExploreBountiesPage() {
                     </div>
                     <h2>{bounty.title}</h2>
                     <p>{bounty.description}</p>
+                    {isBountyInReview(bounty) ? (
+                      <div className={styles.reviewNotice}>
+                        This bounty is in review and no longer accepting contributions.
+                      </div>
+                    ) : null}
                     <dl className={styles.bountyMeta}>
                       <div>
-                        <dt>Reward</dt>
+                        <dt>{bounty.payout_type === "equal_split" ? `Pool (${bounty.max_winners ?? 2} winners)` : bounty.payout_type === "manual_split" ? `Pool (${bounty.max_winners ?? 2} places)` : "Reward"}</dt>
                         <dd>{formatAda(bounty.reward_amount)}</dd>
                       </div>
                       <div>
@@ -369,7 +390,7 @@ export function ExploreBountiesPage() {
                       </div>
                     </dl>
                     <Link className={styles.bountyAction} href={`/bounties/${bounty.id}`}>
-                      View bounty
+                      {isBountyInReview(bounty) ? "View review status" : "View bounty"}
                     </Link>
                   </article>
                 ))}

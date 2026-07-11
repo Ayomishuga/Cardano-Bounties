@@ -1,105 +1,74 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BOUNTY_STATUS, SUBMISSION_STATUS } from "@/lib/bountyContract";
 import { supabaseAdmin } from "@/lib/supabase";
 import { createNotification } from "@/lib/notifications";
+import { LOVELACE_PER_ADA } from "@/lib/bountyContract";
+
+const TX_HASH_PATTERN = /^[0-9a-f]{64}$/i;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const role = req.headers.get("x-user-role");
+  const adminId = req.headers.get("x-user-id");
 
-  if (role !== "admin") {
+  if (role !== "admin" || !adminId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const body = await req.json();
-  const submissionId =
-    typeof body.submission_id === "string" ? body.submission_id.trim() : "";
-  const payoutTxHash =
-    typeof body.transaction_hash === "string"
-      ? body.transaction_hash.trim()
-      : "";
 
-  if (!submissionId) {
+  // Explicit rejection of old API shape
+  if (body.submission_id !== undefined && body.allocation_id === undefined) {
     return NextResponse.json(
-      { error: "submission_id is required" },
+      { error: "submission_id is no longer accepted. Use allocation_id instead." },
       { status: 400 },
     );
   }
 
-  if (!/^[0-9a-f]{64}$/i.test(payoutTxHash)) {
+  const allocationId =
+    typeof body.allocation_id === "string" ? body.allocation_id.trim() : "";
+  const txHash =
+    typeof body.transaction_hash === "string" ? body.transaction_hash.trim() : "";
+
+  if (!allocationId) {
+    return NextResponse.json({ error: "allocation_id is required" }, { status: 400 });
+  }
+
+  if (!TX_HASH_PATTERN.test(txHash)) {
     return NextResponse.json(
       { error: "transaction_hash must be a 64 character hex transaction id" },
       { status: 400 },
     );
   }
 
-  const { data: submission, error: fetchError } = await supabaseAdmin
-    .from("submissions")
-    .select("id, status, bounty_id, contributor_id")
-    .eq("id", submissionId)
-    .single();
-
-  if (fetchError || !submission) {
-    return NextResponse.json(
-      { error: "Submission not found" },
-      { status: 404 },
-    );
-  }
-
-  if (submission.status !== SUBMISSION_STATUS.Approved) {
-    return NextResponse.json(
-      {
-        error: "Submission must be approved before payment release is recorded",
-      },
-      { status: 400 },
-    );
-  }
-
-  const { data: bounty } = await supabaseAdmin
-    .from("bounties")
-    .select("title, reward_amount")
-    .eq("id", submission.bounty_id)
-    .single();
-
-  const now = new Date().toISOString();
-  const { data, error } = await supabaseAdmin
-    .from("submissions")
-    .update({
-      status: SUBMISSION_STATUS.Paid,
-      paid_at: now,
-      transaction_hash: payoutTxHash,
-      updated_at: now,
-    })
-    .eq("id", submissionId)
-    .select()
-    .single();
+  // Call transactional RPC
+  const { data, error } = await supabaseAdmin.rpc("record_allocation_payment", {
+    p_allocation_id: allocationId,
+    p_tx_hash:       txHash,
+    p_admin_id:      adminId,
+  });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  await supabaseAdmin
-    .from("submissions")
-    .update({ status: SUBMISSION_STATUS.Closed, updated_at: now })
-    .eq("bounty_id", submission.bounty_id)
-    .neq("id", submissionId)
-    .eq("status", SUBMISSION_STATUS.Pending);
+  if (!data.ok) {
+    return NextResponse.json({ error: data.error }, { status: 400 });
+  }
 
-  await supabaseAdmin
+  // Fetch bounty title for the notification message
+  const { data: bounty } = await supabaseAdmin
     .from("bounties")
-    .update({
-      status: BOUNTY_STATUS.Completed,
-      payout_tx_hash: payoutTxHash,
-      updated_at: now,
-    })
-    .eq("id", submission.bounty_id);
+    .select("title")
+    .eq("id", data.bounty_id)
+    .single();
 
-  // Notify the contributor that payment has been released
+  const adaAmount = (Number(data.amount_lovelace) / LOVELACE_PER_ADA).toFixed(2);
+
   await createNotification({
-    userId: submission.contributor_id,
+    userId: data.contributor_id,
     type: "payment_released",
     title: "Payment Released!",
-    message: `You've been paid ${bounty?.reward_amount || ""} ADA for "${bounty?.title || "your submission"}".`,
-    relatedId: submission.bounty_id,
+    message: `You've been paid ${adaAmount} ADA for "${bounty?.title ?? "your submission"}".`,
+    relatedId: data.bounty_id,
   });
 
   return NextResponse.json(data);

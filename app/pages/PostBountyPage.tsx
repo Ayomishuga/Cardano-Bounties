@@ -11,7 +11,8 @@ import { useAppWallet } from "@/components/wallet/WalletProvider";
 import { authFetch } from "@/lib/api";
 import { getEscrowLovelace } from "@/lib/cardano/amounts";
 import { initiateBountyEscrow } from "@/lib/cardano/transactions/bountyEscrow";
-import { MAX_REWARD_ADA, PLATFORM_FEE_RATE } from "@/lib/bountyContract";
+import { MAX_REWARD_ADA, MAX_WINNERS, LOVELACE_PER_ADA, PLATFORM_FEE_RATE, PAYOUT_TYPE } from "@/lib/bountyContract";
+import type { PayoutType } from "@/lib/bountyContract";
 import styles from "./PostBountyPage.module.css";
 
 type BountyForm = {
@@ -26,13 +27,20 @@ type BountyForm = {
   bounty_instructions: string;
 };
 
-type FieldErrors = Partial<Record<keyof BountyForm, string>>;
+type FieldErrors = Partial<Record<keyof BountyForm | "prize_structure" | "max_winners" | "payout_type", string>>;
 
 type CreatedBounty = {
   id?: string;
   title?: string;
   error?: string;
   retryable?: boolean;
+  verification_pending?: boolean;
+  escrow_tx_hash?: string;
+  bounty?: {
+    id?: string;
+    title?: string;
+    escrow_tx_hash?: string | null;
+  };
 };
 
 type UploadResponse = {
@@ -281,6 +289,12 @@ export function PostBountyPage() {
   const [projectLogoName, setProjectLogoName] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isDraftSaved, setIsDraftSaved] = useState(false);
+  // Payout structure state
+  const [payoutType, setPayoutType] = useState<PayoutType>(PAYOUT_TYPE.Single);
+  const [maxWinners, setMaxWinners] = useState(2);
+  const [prizeRows, setPrizeRows] = useState<{ rank: number; ada: string }[]>(
+    [{ rank: 1, ada: "" }, { rank: 2, ada: "" }],
+  );
 
   useEffect(() => {
     const saved = localStorage.getItem("cb_bounty_draft");
@@ -428,6 +442,15 @@ export function PostBountyPage() {
         deadline: form.deadline || null,
         project_name: form.project_name.trim() || null,
         project_logo_url: projectLogoUrl || null,
+        // Payout structure
+        payout_type: payoutType,
+        max_winners: payoutType === PAYOUT_TYPE.Single ? 1 : maxWinners,
+        prize_structure: payoutType === PAYOUT_TYPE.ManualSplit
+          ? prizeRows.map((r) => ({
+              rank: r.rank,
+              amount_lovelace: Math.round(Number(r.ada) * LOVELACE_PER_ADA),
+            }))
+          : null,
       };
 
       setSubmitStep("Creating bounty record...");
@@ -461,8 +484,8 @@ export function PostBountyPage() {
       });
       escrowTxSubmitted = true;
 
-      setSubmitStep("Confirming escrow transaction...");
-      await recordEscrowWithRetry({
+      setSubmitStep("Recording escrow transaction...");
+      const escrowRecord = await recordEscrowWithRetry({
         bountyId: data.id,
         txHash,
         escrowAddress: ESCROW_ADDRESS,
@@ -471,12 +494,21 @@ export function PostBountyPage() {
         },
       });
 
-      setCreatedTitle(data.title || payload.title);
+      setCreatedTitle(escrowRecord.title || escrowRecord.bounty?.title || data.title || payload.title);
       setForm(initialForm);
       setProjectLogoFile(null);
       setProjectLogoName("");
       localStorage.removeItem("cb_bounty_draft");
-      toast.success("Bounty funded", "The bounty has been funded and is now awaiting admin review.");
+
+      if (escrowRecord.verification_pending) {
+        toast.success(
+          "Escrow transaction submitted",
+          "Your transaction hash is saved. We will keep checking on-chain confirmation from your dashboard.",
+        );
+      } else {
+        toast.success("Bounty funded", "The bounty has been funded and is now awaiting admin review.");
+      }
+
       router.push("/dashboard");
     } catch (error) {
       const message = getErrorMessage(error, "Unable to post this bounty right now.");
@@ -496,8 +528,8 @@ export function PostBountyPage() {
         }
       } else if (escrowTxSubmitted) {
         toast.error(
-          "Escrow record failed",
-          "Funds may be locked on-chain, but the transaction hash was not saved. Contact support before retrying.",
+          "Escrow verification needs attention",
+          "The wallet transaction was submitted, but the app could not complete escrow recording. Contact support before retrying.",
         );
       } else {
         toast.error("Bounty posting failed", message);
@@ -620,7 +652,7 @@ export function PostBountyPage() {
               </div>
 
               <div className={styles.fieldGroup}>
-                <label htmlFor="reward">Contributor reward</label>
+                <label htmlFor="reward">Reward pool</label>
                 <input
                   id="reward"
                   type="number"
@@ -637,7 +669,7 @@ export function PostBountyPage() {
                 {errors.reward_amount ? <span id="reward-error">{errors.reward_amount}</span> : null}
                 {!errors.reward_amount ? (
                   <small id="reward-hint" className={styles.fieldHint}>
-                    Enter the contributor reward in ADA. Platform fee is added below.
+                    Total reward pool in ADA. Platform fee is added below.
                   </small>
                 ) : null}
               </div>
@@ -665,6 +697,103 @@ export function PostBountyPage() {
                 ) : null}
               </div>
             ) : null}
+
+            {/* Payout structure section */}
+            <div className={styles.fieldGroup}>
+              <label>Payout structure</label>
+              <div className={styles.payoutTypeGroup}>
+                {[
+                  { value: PAYOUT_TYPE.Single, label: "Single winner", hint: "Full pool goes to one contributor" },
+                  { value: PAYOUT_TYPE.EqualSplit, label: "Equal split", hint: "Pool divided equally among N winners" },
+                  { value: PAYOUT_TYPE.ManualSplit, label: "Ranked prizes", hint: "Set custom amounts per placement" },
+                ].map((opt) => (
+                  <label key={opt.value} className={`${styles.payoutRadio} ${payoutType === opt.value ? styles.payoutRadioActive : ""}`}>
+                    <input
+                      type="radio"
+                      name="payout_type"
+                      value={opt.value}
+                      checked={payoutType === opt.value}
+                      onChange={() => {
+                        setPayoutType(opt.value as PayoutType);
+                        if (opt.value === PAYOUT_TYPE.Single) {
+                          setMaxWinners(2);
+                          setPrizeRows([{ rank: 1, ada: "" }, { rank: 2, ada: "" }]);
+                        }
+                      }}
+                    />
+                    <span className={styles.payoutRadioLabel}>{opt.label}</span>
+                    <span className={styles.payoutRadioHint}>{opt.hint}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {payoutType !== PAYOUT_TYPE.Single ? (
+              <div className={styles.fieldGroup}>
+                <label htmlFor="max-winners">Number of winners</label>
+                <input
+                  id="max-winners"
+                  type="number"
+                  min={2}
+                  max={MAX_WINNERS}
+                  value={maxWinners}
+                  onChange={(e) => {
+                    const n = Math.max(2, Math.min(MAX_WINNERS, Number(e.target.value)));
+                    setMaxWinners(n);
+                    if (payoutType === PAYOUT_TYPE.ManualSplit) {
+                      setPrizeRows(
+                        Array.from({ length: n }, (_, i) => ({
+                          rank: i + 1,
+                          ada: prizeRows[i]?.ada ?? "",
+                        }))
+                      );
+                    }
+                  }}
+                />
+                <small className={styles.fieldHint}>2 – {MAX_WINNERS} winners</small>
+              </div>
+            ) : null}
+
+            {payoutType === PAYOUT_TYPE.ManualSplit ? (() => {
+              const rewardAda = Number(form.reward_amount) || 0;
+              const prizeSum = prizeRows.reduce((s, r) => s + (Number(r.ada) || 0), 0);
+              const remaining = Math.round((rewardAda - prizeSum) * 1e6) / 1e6;
+              const rankLabel = (r: number) => r === 1 ? "🥇 1st" : r === 2 ? "🥈 2nd" : r === 3 ? "🥉 3rd" : `${r}th`;
+              return (
+                <div className={styles.prizeStructureSection}>
+                  <label>Prize breakdown</label>
+                  {prizeRows.map((row, i) => (
+                    <div key={row.rank} className={styles.prizeRow}>
+                      <span className={styles.prizeRankLabel}>{rankLabel(row.rank)} place</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="ADA"
+                        value={row.ada}
+                        aria-label={`${rankLabel(row.rank)} place prize in ADA`}
+                        onChange={(e) => {
+                          const updated = [...prizeRows];
+                          updated[i] = { ...updated[i], ada: e.target.value };
+                          setPrizeRows(updated);
+                        }}
+                      />
+                      <span className={styles.prizeAdaLabel}>ADA</span>
+                    </div>
+                  ))}
+                  <div className={`${styles.prizeTotal} ${Math.abs(remaining) > 0.001 ? styles.prizeTotalError : styles.prizeTotalOk}`}>
+                    <span>Pool: {rewardAda} ADA</span>
+                    <span>Allocated: {prizeSum.toFixed(6)} ADA</span>
+                    <span>Remaining: {remaining.toFixed(6)} ADA</span>
+                    {Math.abs(remaining) > 0.001 ? (
+                      <span className={styles.prizeWarning}>Prizes must sum exactly to the reward pool before submitting.</span>
+                    ) : (
+                      <span className={styles.prizeOk}>Prize allocation complete.</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })() : null}
 
             <section className={styles.feeBreakdown} aria-label="ADA funding breakdown">
               <div>

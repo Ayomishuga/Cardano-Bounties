@@ -162,6 +162,17 @@
   padding: 14px;
 }
 
+.summaryCard .reviewStatusNotice {
+  border: 1px solid rgba(180, 83, 9, 0.18);
+  background: #fffbeb;
+}
+
+.summaryCard .reviewStatusNotice strong {
+  color: #92400e;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .summaryCard span,
 .sectionHeader span,
 .actionPanel > span,
@@ -476,6 +487,28 @@
 .submitForm {
   display: grid;
   gap: 16px;
+}
+
+.reviewClosedPanel {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(180, 83, 9, 0.18);
+  border-radius: 10px;
+  background: #fffbeb;
+  color: #92400e;
+  padding: 14px;
+}
+
+.reviewClosedPanel strong {
+  color: #78350f;
+  font-size: 14px;
+}
+
+.reviewClosedPanel span {
+  color: #92400e;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .submitField {

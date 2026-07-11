@@ -2,6 +2,9 @@ export const BOUNTY_STATUS = {
   PendingEscrow: "pending_escrow",
   AwaitingAdminReview: "awaiting_admin_review",
   Open: "open",
+  InReview: "in_review",
+  PayoutPending: "payout_pending",
+  PartiallyPaid: "partially_paid",
   Completed: "completed",
   Cancelled: "cancelled",
   Rejected: "rejected",
@@ -13,7 +16,23 @@ export const SUBMISSION_STATUS = {
   Approved: "approved",
   Rejected: "rejected",
   Closed: "closed",
+  NotSelected: "not_selected",
   Paid: "paid",
+} as const;
+
+export const PAYOUT_TYPE = {
+  Single: "single",
+  EqualSplit: "equal_split",
+  ManualSplit: "manual_split",
+} as const;
+export type PayoutType = (typeof PAYOUT_TYPE)[keyof typeof PAYOUT_TYPE];
+
+export const ALLOCATION_STATUS = {
+  Pending: "pending",
+  Processing: "processing",
+  Paid: "paid",
+  Failed: "failed",
+  Cancelled: "cancelled",
 } as const;
 
 export const BOUNTY_TYPES = [
@@ -31,6 +50,8 @@ export const BOUNTY_TYPES = [
 
 export const PLATFORM_FEE_RATE = 0.1;
 export const MAX_REWARD_ADA = 1_000_000;
+export const MAX_WINNERS = 20;
+export const LOVELACE_PER_ADA = 1_000_000;
 export const MIN_TITLE_LENGTH = 8;
 export const MAX_TITLE_LENGTH = 120;
 export const MIN_TYPE_LENGTH = 3;
@@ -44,6 +65,7 @@ export const MAX_PROJECT_NAME_LENGTH = 120;
 const TX_HASH_PATTERN = /^[0-9a-f]{64}$/i;
 
 export type BountyStatus = (typeof BOUNTY_STATUS)[keyof typeof BOUNTY_STATUS];
+export type SubmissionStatus = (typeof SUBMISSION_STATUS)[keyof typeof SUBMISSION_STATUS];
 export type BountyType = (typeof BOUNTY_TYPES)[number];
 
 export type ValidationResult<T> =
@@ -63,7 +85,23 @@ export type CreateBountyInput = {
   project_name: string | null;
   project_logo_url: string | null;
   bounty_instructions: string;
+  payout_type: PayoutType;
+  max_winners: number;
+  prize_structure: Array<{ rank: number; amount_lovelace: number }> | null;
 };
+
+/**
+ * Computes equal-split allocation amounts in lovelace.
+ * Uses integer division; remainder lovelace goes to rank 1 (index 0).
+ */
+export function computeEqualSplitLovelace(rewardAda: number, winners: number): bigint[] {
+  const totalLovelace = BigInt(Math.round(rewardAda * LOVELACE_PER_ADA));
+  const base = totalLovelace / BigInt(winners);
+  const remainder = totalLovelace % BigInt(winners);
+  return Array.from({ length: winners }, (_, i) =>
+    i === 0 ? base + remainder : base
+  );
+}
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -229,6 +267,54 @@ export function validateCreateBountyPayload(body: unknown): ValidationResult<Cre
     return { ok: false, field: "total_funding_amount", error: "total_funding_amount does not match reward_amount" };
   }
 
+  const payoutType = typeof body.payout_type === "string" && (Object.values(PAYOUT_TYPE) as string[]).includes(body.payout_type)
+    ? (body.payout_type as PayoutType)
+    : PAYOUT_TYPE.Single;
+
+  const rawMaxWinners = Number(body.max_winners);
+  const maxWinners = Number.isInteger(rawMaxWinners) && rawMaxWinners >= 1 ? rawMaxWinners : 1;
+
+  // Validate payout_type constraints
+  if (payoutType === PAYOUT_TYPE.Single && maxWinners !== 1) {
+    return { ok: false, field: "max_winners", error: "Single payout type must have max_winners of 1" };
+  }
+  if ((payoutType === PAYOUT_TYPE.EqualSplit || payoutType === PAYOUT_TYPE.ManualSplit) && maxWinners < 2) {
+    return { ok: false, field: "max_winners", error: "Multi-winner payout types require max_winners of at least 2" };
+  }
+  if (maxWinners > MAX_WINNERS) {
+    return { ok: false, field: "max_winners", error: `max_winners cannot exceed ${MAX_WINNERS}` };
+  }
+
+  // Validate prize_structure for manual_split
+  let prizeStructure: Array<{ rank: number; amount_lovelace: number }> | null = null;
+  if (payoutType === PAYOUT_TYPE.ManualSplit) {
+    if (!Array.isArray(body.prize_structure) || body.prize_structure.length !== maxWinners) {
+      return { ok: false, field: "prize_structure", error: `prize_structure must have exactly ${maxWinners} entries for manual_split` };
+    }
+    const rewardLovelace = Math.round(rewardAmount * LOVELACE_PER_ADA);
+    let structureSum = 0;
+    const ranks = new Set<number>();
+    for (const entry of body.prize_structure) {
+      if (typeof entry.rank !== "number" || !Number.isInteger(entry.rank) || entry.rank < 1) {
+        return { ok: false, field: "prize_structure", error: "Each prize_structure entry must have a valid integer rank >= 1" };
+      }
+      if (typeof entry.amount_lovelace !== "number" || entry.amount_lovelace <= 0) {
+        return { ok: false, field: "prize_structure", error: "Each prize_structure entry must have amount_lovelace > 0" };
+      }
+      if (ranks.has(entry.rank)) {
+        return { ok: false, field: "prize_structure", error: `Duplicate rank ${entry.rank} in prize_structure` };
+      }
+      ranks.add(entry.rank);
+      structureSum += entry.amount_lovelace;
+    }
+    if (structureSum !== rewardLovelace) {
+      return { ok: false, field: "prize_structure", error: `prize_structure sum (${structureSum} lovelace) must equal reward_amount (${rewardLovelace} lovelace)` };
+    }
+    prizeStructure = (body.prize_structure as Array<{ rank: number; amount_lovelace: number }>)
+      .map(e => ({ rank: e.rank, amount_lovelace: e.amount_lovelace }))
+      .sort((a, b) => a.rank - b.rank);
+  }
+
   return {
     ok: true,
     value: {
@@ -244,6 +330,9 @@ export function validateCreateBountyPayload(body: unknown): ValidationResult<Cre
       project_name: projectName,
       project_logo_url: projectLogoUrl,
       bounty_instructions: bountyInstructions,
+      payout_type: payoutType,
+      max_winners: payoutType === PAYOUT_TYPE.Single ? 1 : maxWinners,
+      prize_structure: prizeStructure,
     },
   };
 }

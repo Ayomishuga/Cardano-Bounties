@@ -29,7 +29,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         logo_url
         )
         `, { count: 'exact' })
-    .eq('status', 'open')
+    .in('status', [BOUNTY_STATUS.Open, BOUNTY_STATUS.InReview])
     .order('created_at', {ascending: false})
 
     if (type && type !== 'all') {
@@ -95,6 +95,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         project_name,
         project_logo_url,
         bounty_instructions,
+        payout_type,
+        max_winners,
+        prize_structure,
     } = validated.value
 
     const {data, error} = await supabaseAdmin
@@ -112,6 +115,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         project_name,
         project_logo_url,
         bounty_instructions,
+        payout_type,
+        max_winners,
+        prize_structure,
         created_by: userId,
         status: BOUNTY_STATUS.PendingEscrow
     })
