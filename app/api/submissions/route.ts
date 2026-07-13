@@ -31,6 +31,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Bounty not found" }, { status: 404 });
   }
 
+  if (bounty.status === "in_review") {
+    return NextResponse.json(
+      { error: "This bounty is under review and no longer accepting submissions" },
+      { status: 400 },
+    );
+  }
+
   if (bounty.status !== "open") {
     return NextResponse.json(
       { error: "Bounty is no longer open" },

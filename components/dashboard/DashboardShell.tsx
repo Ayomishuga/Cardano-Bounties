@@ -100,6 +100,13 @@ const pageMeta: Record<string, { eyebrow: string; title: string; description: st
     action: "Overview",
     href: "/dashboard",
   },
+  "/dashboard/contributions": {
+    eyebrow: "Contributor workspace",
+    title: "My contributions",
+    description: "Track bounties you applied for, review status, payout allocation, and payment progress.",
+    action: "Explore bounties",
+    href: "/explore",
+  },
 };
 
 /** Paths that poster-role users are allowed to access inside the dashboard shell */
@@ -107,6 +114,7 @@ const POSTER_ALLOWED_PATHS = new Set([
   "/dashboard",
   "/dashboard/settings",
   "/dashboard/reviews",
+  "/dashboard/contributions",
 ]);
 
 function shortId(value: string | null | undefined) {
@@ -150,6 +158,7 @@ function getNavGroups(metrics: Record<string, number>, role: string) {
         { href: "/post-bounty", label: "Post bounty", count: 0 },
         { href: "/explore", label: "Explore", count: 0 },
         { href: "/dashboard/reviews", label: "Reviews", count: metrics.pending_submission_reviews || 0 },
+        { href: "/dashboard/contributions", label: "My contributions", count: metrics.total_submissions || 0 },
         { href: "/dashboard/settings", label: "Profile Settings", count: 0 },
       ],
     },
@@ -161,21 +170,35 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { connected, disconnectWallet, isAuthenticated, reauthenticate, role, stakeAddress } = useAppWallet();
   const [counts, setCounts] = useState<DashboardCounts | null>(null);
   const [isLoadingCounts, setIsLoadingCounts] = useState(false);
-  const isDashboardHome = pathname === "/dashboard";
-
-  const apiEndpoint = role === "admin" ? "/api/dashboard/admin" : "/api/dashboard/poster";
 
   const loadCounts = useCallback(async () => {
     if (!isAuthenticated || !role) return;
     setIsLoadingCounts(true);
     try {
-      const response = await authFetch(apiEndpoint, { headers: { Accept: "application/json" } });
-      const payload = (await response.json()) as DashboardCounts;
-      if (response.ok) setCounts(payload);
+      if (role === "admin") {
+        const response = await authFetch("/api/dashboard/admin", { headers: { Accept: "application/json" } });
+        const payload = (await response.json()) as DashboardCounts;
+        if (response.ok) setCounts(payload);
+        return;
+      }
+
+      const [posterResponse, contributorResponse] = await Promise.all([
+        authFetch("/api/dashboard/poster", { headers: { Accept: "application/json" } }),
+        authFetch("/api/dashboard/contributor", { headers: { Accept: "application/json" } }),
+      ]);
+      const posterPayload = (await posterResponse.json().catch(() => ({}))) as DashboardCounts;
+      const contributorPayload = (await contributorResponse.json().catch(() => ({}))) as DashboardCounts;
+
+      setCounts({
+        metrics: {
+          ...(posterResponse.ok ? posterPayload.metrics : {}),
+          ...(contributorResponse.ok ? contributorPayload.metrics : {}),
+        },
+      });
     } finally {
       setIsLoadingCounts(false);
     }
-  }, [isAuthenticated, role, apiEndpoint]);
+  }, [isAuthenticated, role]);
 
   useEffect(() => {
     const initialTimer = window.setTimeout(() => {
@@ -204,7 +227,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     ? {
         eyebrow: "Poster workspace",
         title: "Overview",
-        description: "Track bounties you posted, review contributor submissions, and send recommendations to admin review.",
+        description: "Track bounties you posted, review contributor submissions, and follow your own contributions.",
         action: "Post bounty",
         href: "/post-bounty",
       }

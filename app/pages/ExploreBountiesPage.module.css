@@ -237,6 +237,28 @@
   box-shadow: var(--shadow-soft);
 }
 
+.bountyCardInReview {
+  border-color: rgba(180, 83, 9, 0.28);
+  background: linear-gradient(180deg, #fff 0%, #fffbeb 100%);
+}
+
+.bountyCardInReview .bountyAction {
+  background: #92400e;
+  box-shadow: 0 14px 30px rgba(146, 64, 14, 0.18);
+}
+
+.reviewNotice {
+  margin-top: 14px;
+  border: 1px solid rgba(180, 83, 9, 0.18);
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #92400e;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
 .projectIdentity {
   display: flex;
   align-items: center;

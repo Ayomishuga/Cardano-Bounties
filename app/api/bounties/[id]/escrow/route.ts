@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyEscrowPayment } from "@/lib/blockfrost";
-import { adaToLovelace } from "@/lib/cardano/amounts";
 import { BOUNTY_STATUS, validateEscrowPayload } from "@/lib/bountyContract";
+import { verifyAndFinalizeEscrow } from "@/lib/escrowVerification";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export async function POST(
@@ -39,7 +38,19 @@ export async function POST(
 
   const { data: bounty, error: fetchError } = await supabaseAdmin
     .from("bounties")
-    .select("id, status, created_by, total_funding_amount")
+    .select(
+      `
+        id,
+        status,
+        created_by,
+        total_funding_amount,
+        escrow_tx_hash,
+        escrow_address,
+        escrow_submitted_at,
+        escrow_confirmed_at,
+        escrow_verification_attempts
+      `,
+    )
     .eq("id", id)
     .single();
 
@@ -57,6 +68,10 @@ export async function POST(
     );
   }
 
+  if (bounty.status === BOUNTY_STATUS.AwaitingAdminReview && bounty.escrow_confirmed_at) {
+    return NextResponse.json(bounty);
+  }
+
   if (bounty.status !== BOUNTY_STATUS.PendingEscrow) {
     return NextResponse.json(
       { error: "Bounty is not in pending_escrow status" },
@@ -64,51 +79,63 @@ export async function POST(
     );
   }
 
-  const expectedLovelace = adaToLovelace(Number(bounty.total_funding_amount));
-  const verification = await verifyEscrowPayment({
-    txHash: escrow_tx_hash,
-    escrowAddress: escrow_address,
-    expectedLovelace,
-  });
-
-  if (!verification.ok) {
-    if (verification.status === 425) {
-      await supabaseAdmin
-        .from("bounties")
-        .update({
-          escrow_tx_hash,
-          escrow_address,
-          escrow_submitted_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-    }
-
+  if (bounty.escrow_tx_hash && bounty.escrow_tx_hash !== escrow_tx_hash) {
     return NextResponse.json(
       {
-        error: verification.error,
-        retryable: verification.status === 425,
-        escrow_tx_hash,
+        error: "This bounty already has a different escrow transaction recorded.",
+        escrow_tx_hash: bounty.escrow_tx_hash,
       },
-      { status: verification.status || 400 },
+      { status: 409 },
     );
   }
 
-  const { data, error } = await supabaseAdmin
+  const now = new Date().toISOString();
+  const { data: recordedBounty, error: recordError } = await supabaseAdmin
     .from("bounties")
     .update({
       escrow_tx_hash,
       escrow_address,
-      escrow_submitted_at: new Date().toISOString(),
-      escrow_confirmed_at: new Date().toISOString(),
-      status: BOUNTY_STATUS.AwaitingAdminReview,
+      escrow_submitted_at: bounty.escrow_submitted_at || now,
+      escrow_last_checked_at: now,
     })
     .eq("id", id)
-    .select()
+    .select(
+      `
+        id,
+        status,
+        created_by,
+        total_funding_amount,
+        escrow_tx_hash,
+        escrow_address,
+        escrow_submitted_at,
+        escrow_confirmed_at,
+        escrow_verification_attempts
+      `,
+    )
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (recordError || !recordedBounty) {
+    return NextResponse.json(
+      { error: recordError?.message || "Unable to record escrow transaction." },
+      { status: 500 },
+    );
   }
 
-  return NextResponse.json(data);
+  const verification = await verifyAndFinalizeEscrow(recordedBounty);
+
+  if (!verification.ok) {
+    const responseStatus = verification.retryable ? 202 : verification.status;
+    return NextResponse.json(
+      {
+        error: verification.error,
+        retryable: verification.retryable,
+        verification_pending: verification.retryable,
+        escrow_tx_hash,
+        bounty: recordedBounty,
+      },
+      { status: responseStatus },
+    );
+  }
+
+  return NextResponse.json(verification.data);
 }
