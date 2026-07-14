@@ -291,7 +291,7 @@ export function PostBountyPage() {
   const [isDraftSaved, setIsDraftSaved] = useState(false);
   // Payout structure state
   const [payoutType, setPayoutType] = useState<PayoutType>(PAYOUT_TYPE.Single);
-  const [maxWinners, setMaxWinners] = useState(2);
+  const [maxWinners, setMaxWinners] = useState<number | string>(2);
   const [prizeRows, setPrizeRows] = useState<{ rank: number; ada: string }[]>(
     [{ rank: 1, ada: "" }, { rank: 2, ada: "" }],
   );
@@ -381,6 +381,24 @@ export function PostBountyPage() {
     const nextErrors = validateForm(form);
     setErrors(nextErrors);
 
+    if (payoutType !== PAYOUT_TYPE.Single) {
+      const parsedWinners = Number(maxWinners);
+      if (isNaN(parsedWinners) || parsedWinners < 2 || parsedWinners > MAX_WINNERS) {
+        toast.error("Invalid winners count", `Number of winners must be between 2 and ${MAX_WINNERS}.`);
+        return;
+      }
+
+      if (payoutType === PAYOUT_TYPE.ManualSplit) {
+        const rewardAda = Number(form.reward_amount) || 0;
+        const prizeSum = prizeRows.reduce((s, r) => s + (Number(r.ada) || 0), 0);
+        const remaining = Math.round((rewardAda - prizeSum) * 1e6) / 1e6;
+        if (Math.abs(remaining) > 0.001) {
+          toast.error("Invalid prize allocation", "Prizes must sum exactly to the reward pool before submitting.");
+          return;
+        }
+      }
+    }
+
     if (Object.keys(nextErrors).length > 0) {
       toast.error("Review the bounty form", "Fix the highlighted fields before funding escrow.");
       return;
@@ -444,7 +462,7 @@ export function PostBountyPage() {
         project_logo_url: projectLogoUrl || null,
         // Payout structure
         payout_type: payoutType,
-        max_winners: payoutType === PAYOUT_TYPE.Single ? 1 : maxWinners,
+        max_winners: payoutType === PAYOUT_TYPE.Single ? 1 : Number(maxWinners),
         prize_structure: payoutType === PAYOUT_TYPE.ManualSplit
           ? prizeRows.map((r) => ({
               rank: r.rank,
@@ -738,9 +756,10 @@ export function PostBountyPage() {
                   max={MAX_WINNERS}
                   value={maxWinners}
                   onChange={(e) => {
-                    const n = Math.max(2, Math.min(MAX_WINNERS, Number(e.target.value)));
-                    setMaxWinners(n);
-                    if (payoutType === PAYOUT_TYPE.ManualSplit) {
+                    const val = e.target.value;
+                    setMaxWinners(val);
+                    const n = parseInt(val, 10);
+                    if (!isNaN(n) && n >= 2 && n <= MAX_WINNERS && payoutType === PAYOUT_TYPE.ManualSplit) {
                       setPrizeRows(
                         Array.from({ length: n }, (_, i) => ({
                           rank: i + 1,
@@ -750,7 +769,11 @@ export function PostBountyPage() {
                     }
                   }}
                 />
-                <small className={styles.fieldHint}>2 – {MAX_WINNERS} winners</small>
+                {maxWinners !== "" && (Number(maxWinners) < 2 || Number(maxWinners) > MAX_WINNERS || isNaN(Number(maxWinners))) ? (
+                  <span id="winners-error">Number of winners must be between 2 and {MAX_WINNERS}.</span>
+                ) : (
+                  <small className={styles.fieldHint}>2 – {MAX_WINNERS} winners</small>
+                )}
               </div>
             ) : null}
 
@@ -766,16 +789,18 @@ export function PostBountyPage() {
                     <div key={row.rank} className={styles.prizeRow}>
                       <span className={styles.prizeRankLabel}>{rankLabel(row.rank)} place</span>
                       <input
-                        type="number"
-                        min="0"
-                        step="0.01"
+                        type="text"
+                        inputMode="decimal"
                         placeholder="ADA"
                         value={row.ada}
                         aria-label={`${rankLabel(row.rank)} place prize in ADA`}
                         onChange={(e) => {
-                          const updated = [...prizeRows];
-                          updated[i] = { ...updated[i], ada: e.target.value };
-                          setPrizeRows(updated);
+                          const val = e.target.value;
+                          if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                            const updated = [...prizeRows];
+                            updated[i] = { ...updated[i], ada: val };
+                            setPrizeRows(updated);
+                          }
                         }}
                       />
                       <span className={styles.prizeAdaLabel}>ADA</span>
