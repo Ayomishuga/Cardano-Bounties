@@ -112,6 +112,7 @@ const pageMeta: Record<string, { eyebrow: string; title: string; description: st
 /** Paths that poster-role users are allowed to access inside the dashboard shell */
 const POSTER_ALLOWED_PATHS = new Set([
   "/dashboard",
+  "/dashboard/bounties",
   "/dashboard/settings",
   "/dashboard/reviews",
   "/dashboard/contributions",
@@ -155,6 +156,7 @@ function getNavGroups(metrics: Record<string, number>, role: string) {
       label: "Workspace",
       items: [
         { href: "/dashboard", label: "Overview", count: 0 },
+        { href: "/dashboard/bounties", label: "My bounties", count: metrics.total_bounties || 0 },
         { href: "/post-bounty", label: "Post bounty", count: 0 },
         { href: "/explore", label: "Explore", count: 0 },
         { href: "/dashboard/reviews", label: "Reviews", count: metrics.pending_submission_reviews || 0 },
@@ -223,14 +225,24 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const baseMeta = pageMeta[pathname] ?? pageMeta["/dashboard"];
   // For the dashboard home, show role-appropriate eyebrow/title
-  const meta = (pathname === "/dashboard" && role !== "admin")
-    ? {
-        eyebrow: "Poster workspace",
-        title: "Overview",
-        description: "Track bounties you posted, review contributor submissions, and follow your own contributions.",
-        action: "Post bounty",
-        href: "/post-bounty",
-      }
+  const meta = role !== "admin"
+    ? pathname === "/dashboard"
+      ? {
+          eyebrow: "Poster workspace",
+          title: "Overview",
+          description: "Track bounties you posted, review contributor submissions, and follow your own contributions.",
+          action: "Post bounty",
+          href: "/post-bounty",
+        }
+      : pathname === "/dashboard/bounties"
+        ? {
+            eyebrow: "Poster workspace",
+            title: "My bounties",
+            description: "Manage posted bounties, funding verification, submission activity, and lifecycle status.",
+            action: "Post bounty",
+            href: "/post-bounty",
+          }
+        : baseMeta
     : baseMeta;
 
 

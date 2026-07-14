@@ -159,6 +159,7 @@ async function recordEscrowWithRetry({
   const maxAttempts = 10;
   const retryDelayMs = 6000;
   let lastError = "";
+  let lastPendingRecord: CreatedBounty | null = null;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const escrowResponse = await authFetch(`/api/bounties/${bountyId}/escrow`, {
@@ -173,14 +174,21 @@ async function recordEscrowWithRetry({
     });
 
     const escrowData = (await escrowResponse.json()) as CreatedBounty;
+    const verificationPending =
+      Boolean(escrowData.verification_pending) ||
+      (escrowResponse.status === 202 && Boolean(escrowData.retryable));
 
-    if (escrowResponse.ok) return escrowData;
+    if (escrowResponse.ok && !verificationPending) return escrowData;
 
     lastError =
       escrowData.error ||
-      `Escrow transaction submitted, but the app could not save the transaction hash: ${txHash}`;
+      `Escrow transaction submitted, but verification is still pending: ${txHash}`;
 
-    if (!escrowData.retryable && escrowResponse.status !== 425) {
+    if (verificationPending) {
+      lastPendingRecord = escrowData;
+    }
+
+    if (!verificationPending && !escrowData.retryable && escrowResponse.status !== 425) {
       throw new Error(lastError);
     }
 
@@ -188,6 +196,10 @@ async function recordEscrowWithRetry({
       onRetry(attempt);
       await wait(retryDelayMs);
     }
+  }
+
+  if (lastPendingRecord) {
+    return lastPendingRecord;
   }
 
   throw new Error(`${lastError} Transaction hash: ${txHash}`);

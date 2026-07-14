@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useToast } from "@/components/toast/ToastProvider";
 import { authFetch } from "@/lib/api";
 import styles from "@/app/pages/DashboardPage.module.css";
 import queueStyles from "@/app/pages/AdminQueue.module.css";
@@ -27,6 +28,13 @@ type Bounty = {
   deadline?: string | null;
   reward_amount?: number | string | null;
   total_funding_amount?: number | string | null;
+  escrow_tx_hash?: string | null;
+  escrow_address?: string | null;
+  escrow_submitted_at?: string | null;
+  escrow_confirmed_at?: string | null;
+  escrow_last_checked_at?: string | null;
+  escrow_verification_attempts?: number | null;
+  escrow_verification_error?: string | null;
   created_at?: string | null;
   submissions?: Submission[];
 };
@@ -59,13 +67,35 @@ function formatDate(value: string | null | undefined) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value));
 }
 
+function formatDateTime(value: string | null | undefined) {
+  if (!value) return "Not checked yet";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not checked yet";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
 function shortId(value: string | null | undefined) {
   if (!value) return "Unknown";
   if (value.length <= 16) return value;
   return `${value.slice(0, 10)}...${value.slice(-6)}`;
 }
 
+function getStatusKey(status: string) {
+  return status.toLowerCase() === "open" ? "approved" : status.toLowerCase();
+}
+
+function canRetryEscrow(bounty: Bounty) {
+  return bounty.status === "pending_escrow" && Boolean(bounty.escrow_tx_hash);
+}
+
 export function PosterOverviewPage() {
+  const toast = useToast();
   const [data, setData] = useState<PosterDashboardResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -75,6 +105,7 @@ export function PosterOverviewPage() {
   const [sortDesc, setSortDesc] = useState(true);
   const [selectedBountyId, setSelectedBountyId] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
+  const [verifyingBountyId, setVerifyingBountyId] = useState<string | null>(null);
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true);
@@ -92,9 +123,14 @@ export function PosterOverviewPage() {
   }, []);
 
   useEffect(() => {
-    void loadDashboard();
+    const timeoutId = window.setTimeout(() => {
+      void loadDashboard();
+    }, 0);
     const interval = window.setInterval(() => void loadDashboard(), 120_000);
-    return () => window.clearInterval(interval);
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.clearInterval(interval);
+    };
   }, [loadDashboard]);
 
   const metrics = useMemo(() => {
@@ -110,7 +146,7 @@ export function PosterOverviewPage() {
   const pendingReviews = data?.queues.pending_submission_reviews || [];
 
   const items = useMemo(() => {
-    let list = data?.queues.bounties || [];
+    const list = [...(data?.queues.bounties || [])];
     
     list.sort((a, b) => {
       let cmp = 0;
@@ -178,8 +214,42 @@ export function PosterOverviewPage() {
       await navigator.clipboard.writeText(hash);
       setCopyStatus("copied");
       setTimeout(() => setCopyStatus("idle"), 1500);
-    } catch (e) {
+    } catch {
       // Ignored
+    }
+  };
+
+  const handleRetryEscrow = async (bounty: Bounty) => {
+    setVerifyingBountyId(bounty.id);
+    try {
+      const response = await authFetch(`/api/bounties/${bounty.id}/escrow/verify`, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok && response.status !== 202) {
+        throw new Error(payload.error || "Unable to verify escrow transaction.");
+      }
+
+      await loadDashboard();
+
+      if (payload.verification_pending || response.status === 202) {
+        toast.info(
+          "Escrow still pending",
+          payload.error || "Blockfrost has not confirmed the transaction yet. Retry again shortly.",
+        );
+        return;
+      }
+
+      toast.success("Escrow verified", "This bounty is now awaiting admin approval.");
+    } catch (err) {
+      toast.error(
+        "Verification failed",
+        err instanceof Error ? err.message : "Unable to verify escrow transaction.",
+      );
+    } finally {
+      setVerifyingBountyId(null);
     }
   };
 
@@ -336,7 +406,7 @@ export function PosterOverviewPage() {
                       <span className={queueStyles.bountyTitle} title={bounty.title}>{bounty.title}</span>
                     </td>
                     <td>
-                      <span className={queueStyles.statusPill} data-status={bounty.status.toLowerCase() === "open" ? "approved" : bounty.status.toLowerCase()}>
+                      <span className={queueStyles.statusPill} data-status={getStatusKey(bounty.status)}>
                         {normalizeStatus(bounty.status)}
                       </span>
                     </td>
@@ -351,6 +421,20 @@ export function PosterOverviewPage() {
                     </td>
                     <td>
                       <div className={queueStyles.actions}>
+                        {canRetryEscrow(bounty) ? (
+                          <button
+                            type="button"
+                            className={queueStyles.approveBtn}
+                            disabled={verifyingBountyId === bounty.id}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleRetryEscrow(bounty);
+                            }}
+                            style={{ padding: "4px 10px", fontSize: 11, minHeight: "auto", marginRight: 8 }}
+                          >
+                            {verifyingBountyId === bounty.id ? "Checking..." : "Retry"}
+                          </button>
+                        ) : null}
                         <button type="button" aria-label="View bounty" tabIndex={-1} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit' }}>
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -373,7 +457,7 @@ export function PosterOverviewPage() {
           <div className={queueStyles.modal} role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <div className={queueStyles.modalHeader}>
               <div className={queueStyles.modalHeaderLeft}>
-                <span className={queueStyles.statusPill} data-status={selectedItem.status.toLowerCase() === "open" ? "approved" : selectedItem.status.toLowerCase()}>
+                <span className={queueStyles.statusPill} data-status={getStatusKey(selectedItem.status)}>
                   {normalizeStatus(selectedItem.status)}
                 </span>
                 <span className={queueStyles.modalAmount}>{formatAda(selectedItem.reward_amount)}</span>
@@ -421,6 +505,41 @@ export function PosterOverviewPage() {
                     {formatDate(selectedItem.deadline)}
                   </div>
                 </div>
+                {selectedItem.status === "pending_escrow" ? (
+                  <div className={queueStyles.contentBlock}>
+                    <div className={queueStyles.contentLabel}>Escrow verification</div>
+                    <div className={queueStyles.contentValue}>
+                      {selectedItem.escrow_tx_hash
+                        ? "The wallet transaction is recorded, but escrow has not been confirmed by Blockfrost yet."
+                        : "No escrow transaction hash has been recorded for this bounty."}
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
+                      <div>
+                        <div className={queueStyles.contentLabel}>Transaction</div>
+                        <div className={queueStyles.contentValue} style={{ fontFamily: "ui-monospace, monospace", fontSize: 12 }}>
+                          {shortId(selectedItem.escrow_tx_hash)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className={queueStyles.contentLabel}>Last checked</div>
+                        <div className={queueStyles.contentValue}>{formatDateTime(selectedItem.escrow_last_checked_at)}</div>
+                      </div>
+                      <div>
+                        <div className={queueStyles.contentLabel}>Attempts</div>
+                        <div className={queueStyles.contentValue}>{selectedItem.escrow_verification_attempts || 0}</div>
+                      </div>
+                      <div>
+                        <div className={queueStyles.contentLabel}>Submitted</div>
+                        <div className={queueStyles.contentValue}>{formatDateTime(selectedItem.escrow_submitted_at)}</div>
+                      </div>
+                    </div>
+                    {selectedItem.escrow_verification_error ? (
+                      <div className={queueStyles.contentValue} style={{ marginTop: 12, color: "var(--status-warning-text)" }}>
+                        {selectedItem.escrow_verification_error}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -434,9 +553,20 @@ export function PosterOverviewPage() {
                 </button>
               </div>
 
-              <button type="button" className={queueStyles.rejectBtn} disabled>
-                Close Bounty
-              </button>
+              {canRetryEscrow(selectedItem) ? (
+                <button
+                  type="button"
+                  className={queueStyles.approveBtn}
+                  disabled={verifyingBountyId === selectedItem.id}
+                  onClick={() => void handleRetryEscrow(selectedItem)}
+                >
+                  {verifyingBountyId === selectedItem.id ? "Checking escrow..." : "Retry verification"}
+                </button>
+              ) : (
+                <button type="button" className={queueStyles.rejectBtn} disabled>
+                  Close Bounty
+                </button>
+              )}
               <button type="button" className={queueStyles.approveBtn} disabled>
                 Edit Details
               </button>
