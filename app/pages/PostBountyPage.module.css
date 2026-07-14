@@ -302,7 +302,7 @@
   font-weight: 700;
 }
 
-.prizeRow input[type="number"] {
+.prizeRow input {
   width: 100%;
   height: 40px;
   border: 1px solid var(--line);
@@ -316,7 +316,7 @@
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
-.prizeRow input[type="number"]:focus {
+.prizeRow input:focus {
   border-color: rgba(1, 81, 194, 0.5);
   box-shadow: 0 0 0 4px var(--blue-soft);
 }

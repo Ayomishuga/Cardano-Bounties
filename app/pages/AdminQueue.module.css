@@ -267,6 +267,9 @@
 
 .statusPill[data-status="pending"],
 .statusPill[data-status="submitted"],
+.statusPill[data-status="pending_escrow"],
+.statusPill[data-status="awaiting_admin_review"],
+.statusPill[data-status="in_review"],
 .statusPill[data-status="payout_pending"] {
   background: var(--status-warning-bg);
   color: var(--status-warning-text);
@@ -275,7 +278,8 @@
 .statusPill[data-status="approved"],
 .statusPill[data-status="recommended_approval"],
 .statusPill[data-status="recommended"],
-.statusPill[data-status="paid"] {
+.statusPill[data-status="paid"],
+.statusPill[data-status="completed"] {
   background: var(--status-success-bg);
   color: var(--status-success-text);
 }
