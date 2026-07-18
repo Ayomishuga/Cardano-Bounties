@@ -16,9 +16,8 @@ export function Footer() {
             <h3>Platform</h3>
             <Link href="/explore">Explore Bounties</Link>
             <Link href="/#pricing">How It Works</Link>
-            <Link href="/#leaderboard">Leaderboard</Link>
             <Link href="/#faq">FAQs</Link>
-            <Link href="/#waitlist">Join Waitlist</Link>
+            <Link href="/post-bounty">Post a Bounty</Link>
           </div>
           <div>
             <h3>For Projects</h3>
@@ -33,9 +32,9 @@ export function Footer() {
             <a href="https://youtube.com/@cardanobounties" target="_blank" rel="noopener noreferrer">Follow us on Youtube</a>
           </div>
         </div>
-        <div className="footer-bottom">
-          <p>© 2026 Cardano Bounties. All rights reserved.</p>
-          <p>Built with ❤️ by <a href="https://x.com/TechKr_Team" target="_blank" rel="noopener noreferrer">TechKR</a> and <a href="https://gimbalabs.com" target="_blank" rel="noopener noreferrer">Gimbalabs</a>.</p>
+        <div className="footer-bottom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap' }}>
+          <p style={{ margin: 0 }}>© 2026 Cardano Bounties. All rights reserved.</p>
+          <p style={{ margin: 0, textAlign: 'right' }}>Built with ❤️ by <a href="https://x.com/TechKr_Team" target="_blank" rel="noopener noreferrer">TechKR</a> and <a href="https://gimbalabs.com" target="_blank" rel="noopener noreferrer">Gimbalabs</a>.</p>
         </div>
       </div>
     </footer>

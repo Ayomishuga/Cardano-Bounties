@@ -25,6 +25,27 @@ export async function initiateBountyEscrow({
   return wallet.submitTx(signedTx);
 }
 
+export type ReleaseBountyPayoutInput = {
+  wallet: BrowserWallet;
+  recipientAddress: string;
+  lovelace: string | number;
+};
+
+export async function releaseBountyPayout({
+  wallet,
+  recipientAddress,
+  lovelace,
+}: ReleaseBountyPayoutInput) {
+  const { Transaction } = await import("@meshsdk/core");
+  const tx = new Transaction({ initiator: wallet });
+
+  tx.sendLovelace(recipientAddress, String(lovelace));
+
+  const unsignedTx = await tx.build();
+  const signedTx = await wallet.signTx(unsignedTx);
+  return wallet.submitTx(signedTx);
+}
+
 export function recordBountyPayout({ transactionHash }: RecordOnlyPayoutInput) {
   return { transaction_hash: transactionHash };
 }
@@ -32,3 +53,4 @@ export function recordBountyPayout({ transactionHash }: RecordOnlyPayoutInput) {
 export function recordBountyRefund({ transactionHash }: RecordOnlyPayoutInput) {
   return { transaction_hash: transactionHash };
 }
+

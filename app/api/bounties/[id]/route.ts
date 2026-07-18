@@ -37,7 +37,9 @@ export async function GET(
     return NextResponse.json({ error: "Bounty not found" }, { status: 404 });
   }
 
-  if (data.status !== "open") {
+  const isPubliclyViewable = [BOUNTY_STATUS.Open, BOUNTY_STATUS.InReview].includes(data.status);
+
+  if (!isPubliclyViewable) {
     if (!userId || (data.created_by !== userId && role !== "admin")) {
       return NextResponse.json({ error: "Bounty not found" }, { status: 404 });
     }

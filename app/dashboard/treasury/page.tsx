@@ -1,6 +1,6 @@
-import { DashboardManagementPage } from "@/app/pages/DashboardManagementPage";
+import { AdminTreasuryPage } from "@/app/pages/AdminTreasuryPage";
 
 export default function DashboardTreasury() {
-  return <DashboardManagementPage view="treasury" />;
+  return <AdminTreasuryPage />;
 }
 

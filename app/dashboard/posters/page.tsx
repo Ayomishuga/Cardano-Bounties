@@ -1,6 +1,6 @@
-import { DashboardManagementPage } from "@/app/pages/DashboardManagementPage";
+import { AdminPostersPage } from "@/app/pages/AdminPostersPage";
 
 export default function DashboardPosters() {
-  return <DashboardManagementPage view="posters" />;
+  return <AdminPostersPage />;
 }
 

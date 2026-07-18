@@ -16,7 +16,9 @@ export function HowItWorks() {
                 <span>{plan.name}</span>
                 <p>{plan.intro}</p>
                 <h3>{plan.price}</h3>
-                <a href="#">{plan.action}</a>
+                {plan.action && (
+                  <a href={(plan as any).link || "#"}>{plan.action}</a>
+                )}
               </div>
               <ul>
                 {plan.features.map((feature) => (

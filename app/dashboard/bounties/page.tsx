@@ -1,6 +1,6 @@
-import { DashboardManagementPage } from "@/app/pages/DashboardManagementPage";
+import { DashboardBountiesPage } from "@/app/pages/DashboardBountiesPage";
 
 export default function DashboardBounties() {
-  return <DashboardManagementPage view="bounties" />;
+  return <DashboardBountiesPage />;
 }
 

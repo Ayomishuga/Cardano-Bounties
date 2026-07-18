@@ -14,10 +14,9 @@ export function Benefits() {
         <div className="benefit-grid">
           {benefits.map((item) => (
             <article className={`benefit-card ${item.highlighted ? "highlight" : ""}`} key={item.title}>
-              <div className="icon-box"><Icon name={item.icon} /></div>
+              <div className="icon-box"><Icon name={item.icon as any} /></div>
               <h3>{item.title}</h3>
               <p>{item.text}</p>
-              <a href="#pricing">Learn More</a>
             </article>
           ))}
         </div>

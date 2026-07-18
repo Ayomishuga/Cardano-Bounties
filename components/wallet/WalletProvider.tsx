@@ -25,8 +25,8 @@ type WalletContextValue = {
 };
 
 const WalletContext = createContext<WalletContextValue | null>(null);
-const STORAGE_WALLET_KEY = "cardano-bounties-wallet-id";
-const STORAGE_TOKEN_KEY = "cb_token";
+const STORAGE_WALLET_KEY = process.env.NEXT_PUBLIC_STORAGE_WALLET_KEY!;
+const STORAGE_TOKEN_KEY = process.env.NEXT_PUBLIC_STORAGE_TOKEN_KEY!;
 
 async function toBech32Address(address: string) {
   if (!address) return "";

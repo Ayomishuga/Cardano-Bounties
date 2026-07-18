@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { WalletConnect } from "@/components/wallet/WalletConnect";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useAppWallet } from "@/components/wallet/WalletProvider";
 import { authFetch } from "@/lib/api";
 import styles from "@/app/pages/DashboardPage.module.css";
@@ -92,7 +93,30 @@ const pageMeta: Record<string, { eyebrow: string; title: string; description: st
     action: "Overview",
     href: "/dashboard",
   },
+  "/dashboard/reviews": {
+    eyebrow: "Poster workspace",
+    title: "Submission reviews",
+    description: "Review contributor submissions for your bounties and recommend them to admin or request changes.",
+    action: "Overview",
+    href: "/dashboard",
+  },
+  "/dashboard/contributions": {
+    eyebrow: "Contributor workspace",
+    title: "My contributions",
+    description: "Track bounties you applied for, review status, payout allocation, and payment progress.",
+    action: "Explore bounties",
+    href: "/explore",
+  },
 };
+
+/** Paths that poster-role users are allowed to access inside the dashboard shell */
+const POSTER_ALLOWED_PATHS = new Set([
+  "/dashboard",
+  "/dashboard/bounties",
+  "/dashboard/settings",
+  "/dashboard/reviews",
+  "/dashboard/contributions",
+]);
 
 function shortId(value: string | null | undefined) {
   if (!value) return "Unknown";
@@ -124,19 +148,23 @@ function getNavGroups(metrics: Record<string, number>, role: string) {
       },
       { label: "System", items: [{ href: "/dashboard/treasury", label: "Treasury", count: 0 }] },
     ];
-  } else {
-    return [
-      {
-        label: "Workspace",
-        items: [
-          { href: "/dashboard", label: "Overview", count: 0 },
-          { href: "/post-bounty", label: "Post bounty", count: 0 },
-          { href: "/explore", label: "Explore", count: 0 },
-          { href: "/dashboard/settings", label: "Profile Settings", count: 0 },
-        ],
-      },
-    ];
   }
+
+  // Poster nav
+  return [
+    {
+      label: "Workspace",
+      items: [
+        { href: "/dashboard", label: "Overview", count: 0 },
+        { href: "/dashboard/bounties", label: "My bounties", count: metrics.total_bounties || 0 },
+        { href: "/post-bounty", label: "Post bounty", count: 0 },
+        { href: "/explore", label: "Explore", count: 0 },
+        { href: "/dashboard/reviews", label: "Reviews", count: metrics.pending_submission_reviews || 0 },
+        { href: "/dashboard/contributions", label: "My contributions", count: metrics.total_submissions || 0 },
+        { href: "/dashboard/settings", label: "Profile Settings", count: 0 },
+      ],
+    },
+  ];
 }
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -144,15 +172,31 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { connected, disconnectWallet, isAuthenticated, reauthenticate, role, stakeAddress } = useAppWallet();
   const [counts, setCounts] = useState<DashboardCounts | null>(null);
   const [isLoadingCounts, setIsLoadingCounts] = useState(false);
-  const isDashboardHome = pathname === "/dashboard";
 
   const loadCounts = useCallback(async () => {
-    if (!isAuthenticated || role !== "admin") return;
+    if (!isAuthenticated || !role) return;
     setIsLoadingCounts(true);
     try {
-      const response = await authFetch("/api/dashboard/admin", { headers: { Accept: "application/json" } });
-      const payload = (await response.json()) as DashboardCounts;
-      if (response.ok) setCounts(payload);
+      if (role === "admin") {
+        const response = await authFetch("/api/dashboard/admin", { headers: { Accept: "application/json" } });
+        const payload = (await response.json()) as DashboardCounts;
+        if (response.ok) setCounts(payload);
+        return;
+      }
+
+      const [posterResponse, contributorResponse] = await Promise.all([
+        authFetch("/api/dashboard/poster", { headers: { Accept: "application/json" } }),
+        authFetch("/api/dashboard/contributor", { headers: { Accept: "application/json" } }),
+      ]);
+      const posterPayload = (await posterResponse.json().catch(() => ({}))) as DashboardCounts;
+      const contributorPayload = (await contributorResponse.json().catch(() => ({}))) as DashboardCounts;
+
+      setCounts({
+        metrics: {
+          ...(posterResponse.ok ? posterPayload.metrics : {}),
+          ...(contributorResponse.ok ? contributorPayload.metrics : {}),
+        },
+      });
     } finally {
       setIsLoadingCounts(false);
     }
@@ -163,7 +207,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       void loadCounts();
     }, 0);
 
-    if (!isAuthenticated || role !== "admin") {
+    if (!isAuthenticated) {
       return () => window.clearTimeout(initialTimer);
     }
 
@@ -175,14 +219,37 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       window.clearTimeout(initialTimer);
       window.clearInterval(timer);
     };
-  }, [isAuthenticated, loadCounts, role]);
+  }, [isAuthenticated, loadCounts]);
 
   const navGroups = useMemo(() => getNavGroups(counts?.metrics || {}, role || ""), [counts, role]);
-  const meta = pageMeta[pathname] || pageMeta["/dashboard"];
 
-  if (isDashboardHome && role !== "admin") {
-    return children;
-  }
+  const baseMeta = pageMeta[pathname] ?? pageMeta["/dashboard"];
+  // For the dashboard home, show role-appropriate eyebrow/title
+  const meta = role !== "admin"
+    ? pathname === "/dashboard"
+      ? {
+          eyebrow: "Poster workspace",
+          title: "Overview",
+          description: "Track bounties you posted, review contributor submissions, and follow your own contributions.",
+          action: "Post bounty",
+          href: "/post-bounty",
+        }
+      : pathname === "/dashboard/bounties"
+        ? {
+            eyebrow: "Poster workspace",
+            title: "My bounties",
+            description: "Manage posted bounties, funding verification, submission activity, and lifecycle status.",
+            action: "Post bounty",
+            href: "/post-bounty",
+          }
+        : baseMeta
+    : baseMeta;
+
+
+  // Determine if this poster-role user is allowed on this path
+  const isPosterAllowed = role !== "admin" && POSTER_ALLOWED_PATHS.has(pathname);
+  const isAdminPath = role === "admin";
+  const isAllowed = isAdminPath || isPosterAllowed;
 
   return (
     <main className={styles.dashboardShell}>
@@ -228,63 +295,60 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <section className={styles.dashboardMain}>
-        <header className={styles.topbar}>
-          <div>
-            <span className="pill">{meta.eyebrow}</span>
-            <h1>{meta.title}</h1>
-            <p>{meta.description}</p>
+        {/* ── Sticky top nav bar ── */}
+        <div className={styles.topnav}>
+          <div className={styles.topnavLeft}>
+            <div className={styles.topnavBreadcrumb}>
+              <span>{role === "admin" ? "Admin" : "Poster"}</span>
+              <span className={styles.topnavSep}>/</span>
+              <strong>{meta.title}</strong>
+            </div>
           </div>
-          <div className={styles.topbarControls} aria-label="Dashboard controls">
-            <label>
-              <span>Search</span>
-              <input type="search" placeholder="Search dashboard" />
-            </label>
-            <label>
-              <span>Filter</span>
-              <select defaultValue="all">
-                <option value="all">All queues</option>
-                <option value="attention">Needs attention</option>
-                <option value="funded">Funded</option>
-              </select>
-            </label>
-            <label>
-              <span>Date range</span>
-              <select defaultValue="30d">
-                <option value="7d">Last 7 days</option>
-                <option value="30d">Last 30 days</option>
-                <option value="90d">Last 90 days</option>
-              </select>
-            </label>
-            <Link href={meta.href}>{meta.action}</Link>
-          </div>
-        </header>
 
-        {!connected ? (
-          <section className={styles.panel}>
-            <div className={styles.emptyState}>
-              <h2>Connect wallet to view dashboard</h2>
-              <p>Dashboard operations require a connected wallet.</p>
-              <WalletConnect />
-            </div>
-          </section>
-        ) : !isAuthenticated ? (
-          <section className={styles.panel}>
-            <div className={styles.emptyState}>
-              <h2>Sign wallet verification</h2>
-              <p>Dashboard actions require an authenticated wallet session.</p>
-              <button type="button" onClick={() => void reauthenticate()}>Sign verification</button>
-            </div>
-          </section>
-        ) : (role !== "admin" && pathname !== "/dashboard/settings") ? (
-          <section className={styles.panel}>
-            <div className={styles.emptyState}>
-              <h2>Admin access required</h2>
-              <p>This dashboard workspace is only available to admin wallets.</p>
-            </div>
-          </section>
-        ) : (
-          children
-        )}
+          <div className={styles.topnavRight}>
+            <NotificationBell />
+            <Link href={meta.href} className={styles.topnavAction}>
+              {meta.action}
+            </Link>
+          </div>
+        </div>
+
+        {/* ── Main content area ── */}
+        <div className={styles.dashboardContent}>
+          {!connected ? (
+            <section className={styles.panel}>
+              <div className={styles.emptyState}>
+                <h2>Connect wallet to view dashboard</h2>
+                <p>Dashboard operations require a connected wallet.</p>
+                <WalletConnect />
+              </div>
+            </section>
+          ) : !isAuthenticated ? (
+            <section className={styles.panel}>
+              <div className={styles.emptyState}>
+                <h2>Sign wallet verification</h2>
+                <p>Dashboard actions require an authenticated wallet session.</p>
+                <button type="button" onClick={() => void reauthenticate()}>Sign verification</button>
+              </div>
+            </section>
+          ) : !isAllowed ? (
+            <section className={styles.panel}>
+              <div className={styles.emptyState}>
+                <h2>Admin access required</h2>
+                <p>This dashboard workspace is only available to admin wallets.</p>
+              </div>
+            </section>
+          ) : (
+            <>
+              <header className={styles.topbar}>
+                <span className="pill">{meta.eyebrow}</span>
+                <h1>{meta.title}</h1>
+                <p>{meta.description}</p>
+              </header>
+              {children}
+            </>
+          )}
+        </div>
       </section>
     </main>
   );

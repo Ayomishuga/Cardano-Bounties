@@ -3,6 +3,7 @@ import { supabaseAdmin } from "./supabase";
 type NotificationType = 
 | 'submission_approved'
 | 'submission_rejected'
+| 'submission_not_selected'
 | 'bounty_approved'
 | 'bounty_rejected'
 | 'new_submission'

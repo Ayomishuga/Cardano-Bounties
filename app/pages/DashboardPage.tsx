@@ -22,6 +22,9 @@ type Bounty = {
   escrow_tx_hash?: string | null;
   escrow_submitted_at?: string | null;
   escrow_confirmed_at?: string | null;
+  escrow_last_checked_at?: string | null;
+  escrow_verification_attempts?: number | null;
+  escrow_verification_error?: string | null;
   refund_tx_hash?: string | null;
   refunded_at?: string | null;
   created_by?: string | null;
@@ -160,9 +163,13 @@ function canAdminReviewBounty(bounty: Bounty) {
   return bounty.status === "awaiting_admin_review";
 }
 
+function isEscrowVerificationPending(bounty: Bounty) {
+  return bounty.status === "pending_escrow" && Boolean(bounty.escrow_tx_hash) && !bounty.escrow_confirmed_at;
+}
+
 function getFundingState(bounty: Bounty) {
   if (bounty.escrow_confirmed_at) return "Escrow confirmed";
-  if (bounty.escrow_tx_hash) return "Escrow submitted";
+  if (bounty.escrow_tx_hash) return "Verification pending";
   return "Awaiting escrow";
 }
 
@@ -194,6 +201,12 @@ function getBountyLifecycleNote(bounty: Bounty) {
   }
 
   if (bounty.status === "pending_escrow") {
+    if (isEscrowVerificationPending(bounty)) {
+      return bounty.escrow_last_checked_at
+        ? `Escrow submitted; last verification check ${formatRelativeTime(bounty.escrow_last_checked_at)}.`
+        : "Escrow submitted; waiting for on-chain verification.";
+    }
+
     return "Waiting for escrow transaction verification before admin review.";
   }
 
@@ -511,7 +524,6 @@ export function DashboardPage() {
                 <article className={styles.metricCard} key={label}>
                   <span>{label}</span>
                   <strong>{value}</strong>
-                  <p>Live from Supabase</p>
                 </article>
               ))}
             </section>
@@ -631,7 +643,11 @@ export function DashboardPage() {
                     <h2>My posted bounties</h2>
                   </div>
                 </div>
-                <BountyTable bounties={data?.queues.bounties || []} />
+                <BountyTable
+                  actionId={actionId}
+                  bounties={data?.queues.bounties || []}
+                  runAction={runAction}
+                />
               </section>
               </>
             )}
@@ -1094,7 +1110,15 @@ function AllBountyDetail({
   );
 }
 
-function BountyTable({ bounties }: { bounties: Bounty[] }) {
+function BountyTable({
+  actionId,
+  bounties,
+  runAction,
+}: {
+  actionId: string;
+  bounties: Bounty[];
+  runAction: (id: string, action: () => Promise<Response>, successMessage: string) => Promise<void>;
+}) {
   return (
     <div className={styles.activityTable} role="table" aria-label="Posted bounties">
       <div className={styles.tableHead} role="row">
@@ -1107,7 +1131,28 @@ function BountyTable({ bounties }: { bounties: Bounty[] }) {
         <div className={styles.tableRow} role="row" key={bounty.id}>
           <span role="cell" data-label="Bounty">{bounty.title}</span>
           <span role="cell" data-label="Reward">{formatAda(bounty.reward_amount)}</span>
-          <span role="cell" data-label="Status"><b>{normalizeStatus(bounty.status)}</b></span>
+          <span role="cell" data-label="Status">
+            <b>{isEscrowVerificationPending(bounty) ? "Escrow Verification Pending" : normalizeStatus(bounty.status)}</b>
+            {bounty.escrow_verification_error ? <small>{bounty.escrow_verification_error}</small> : null}
+            {isEscrowVerificationPending(bounty) ? (
+              <button
+                type="button"
+                disabled={actionId === `${bounty.id}:verify-escrow`}
+                onClick={() =>
+                  void runAction(
+                    `${bounty.id}:verify-escrow`,
+                    () =>
+                      authFetch(`/api/bounties/${bounty.id}/escrow/verify`, {
+                        method: "POST",
+                      }),
+                    "Escrow verification checked.",
+                  )
+                }
+              >
+                {actionId === `${bounty.id}:verify-escrow` ? "Checking..." : "Retry verification"}
+              </button>
+            ) : null}
+          </span>
           <span role="cell" data-label="Updated">{formatDate(bounty.created_at)}</span>
         </div>
       ))}

@@ -37,7 +37,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // Return the most recently used address
     return NextResponse.json({
       payment_address: addresses[0].address,
-      all_addresses: addresses.map((a) => a.address),
+      all_addresses: addresses.map((a: { address: string }) => a.address),
     });
   } catch (err) {
     const statusCode = (err as {status_code?: number })?.status_code

@@ -1,5 +1,7 @@
 export const navItems = [
   ["Explore Bounties", "/explore"],
+  ["Post Bounty", "/post-bounty"],
+  ["Dashboard", "/dashboard"],
   ["How It Works", "/#pricing"],
   ["FAQs", "/#faq"],
 ];
@@ -8,17 +10,20 @@ export const benefits = [
   {
     title: "Wallet-based login",
     text: "No email, no password, no account setup. Your Cardano wallet is your identity on the platform. Connect once and you're in.",
+    details: "Cardano Bounties uses CIP-30 (Cardano Improvement Proposal 30) to authenticate your identity directly through your wallet. When you connect, you sign a cryptographic message proving ownership of your stake address. This means you don't need to remember passwords, and your reputation on the platform is directly tied to your on-chain identity.",
     icon: "bolt",
     highlighted: true,
   },
   {
     title: "Real tasks, real rewards",
     text: "Browse open bounties, choose work that matches your skill level, submit your contribution, and earn ADA when approved.",
+    details: "Every bounty posted on the platform has its ADA reward locked in a smart contract escrow or verified treasury reserve. When you complete a bounty and the admin approves your submission, the reward is released directly to the wallet you used to sign in. No minimum payout thresholds, no waiting for monthly billing cycles.",
     icon: "list",
   },
   {
     title: "Open to all skill levels",
     text: "Developers, designers, writers, researchers, and curious newcomers can all find meaningful work across the ecosystem.",
+    details: "The Cardano ecosystem needs diverse skills to thrive. While there are highly technical Plutus and Aiken bounties, you'll also find tasks for graphic design, UI/UX, translating documentation, organizing local meetups, and writing articles. If you want to contribute to the ecosystem, there's a bounty here for you.",
     icon: "globe",
   },
 ];
@@ -56,7 +61,6 @@ export const plans = [
     name: "01",
     intro: "Visit Cardano Bounties and connect Nami, Eternl, Lace, or any CIP-30 compatible wallet.",
     price: "Connect your wallet",
-    action: "Join the Waitlist",
     features: [
       "No email or password required.",
       "Your wallet becomes your account.",
@@ -69,6 +73,7 @@ export const plans = [
     intro: "Explore open bounties across categories. Filter by type, difficulty, or reward size.",
     price: "Browse and claim a bounty",
     action: "Explore Bounties",
+    link: "/explore",
     featured: true,
     features: [
       "Code, design, content, and research.",
@@ -81,7 +86,6 @@ export const plans = [
     name: "03",
     intro: "Complete the task and submit your work for review. Approved submissions are paid directly in ADA.",
     price: "Submit your work and earn ADA",
-    action: "See How It Works",
     features: [
       "Admin-reviewed submissions.",
       "ADA rewards paid on-chain.",

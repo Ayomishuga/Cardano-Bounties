@@ -1,6 +1,6 @@
-import { DashboardManagementPage } from "@/app/pages/DashboardManagementPage";
+import { AdminDisputesPage } from "@/app/pages/AdminDisputesPage";
 
 export default function DashboardDisputes() {
-  return <DashboardManagementPage view="disputes" />;
+  return <AdminDisputesPage />;
 }
 

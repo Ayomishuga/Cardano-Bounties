@@ -1,6 +1,6 @@
-import { DashboardManagementPage } from "@/app/pages/DashboardManagementPage";
+import { AdminHuntersPage } from "@/app/pages/AdminHuntersPage";
 
 export default function DashboardHunters() {
-  return <DashboardManagementPage view="hunters" />;
+  return <AdminHuntersPage />;
 }
 

@@ -2,7 +2,7 @@
 
 import { useAppWallet } from "@/components/wallet/WalletProvider";
 import { AdminOperationsPage } from "./AdminOperationsPage";
-import { DashboardPage } from "./DashboardPage";
+import { PosterOverviewPage } from "./PosterOverviewPage";
 
 export function DashboardHomePage() {
   const { role } = useAppWallet();
@@ -11,5 +11,5 @@ export function DashboardHomePage() {
     return <AdminOperationsPage />;
   }
 
-  return <DashboardPage />;
+  return <PosterOverviewPage />;
 }

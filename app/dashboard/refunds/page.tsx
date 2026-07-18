@@ -1,5 +1,5 @@
-import { AdminOperationQueuePage } from "@/app/pages/AdminOperationQueuePage";
+import { AdminRefundsPage } from "@/app/pages/AdminRefundsPage";
 
 export default function DashboardRefunds() {
-  return <AdminOperationQueuePage view="refunds" />;
+  return <AdminRefundsPage />;
 }

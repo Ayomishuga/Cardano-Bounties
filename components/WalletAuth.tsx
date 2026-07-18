@@ -30,7 +30,8 @@ export default function WalletAuth() {
       });
 
       const { token } = await verifyRes.json();
-      localStorage.setItem('cb_token', token);
+      const tokenKey = process.env.NEXT_PUBLIC_STORAGE_TOKEN_KEY!;
+      localStorage.setItem(tokenKey, token);
     } catch (err) {
       console.error('Auth failed:', err);
     } finally {
