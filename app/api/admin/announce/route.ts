@@ -12,6 +12,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    const body = await req.json()
+    const { subject, message } = body
+
+    if (!subject || !message) {
+        return NextResponse.json(
+            { error: 'subject and message are required' },
+            { status: 400 }
+        )
+    }
+
     // Fetch all waitlist emails
     const { data: waitlist, error } = await supabaseAdmin.from('waitlist').select('email')
 
@@ -26,7 +36,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const emails = waitlist.map(w => w.email)
 
     // Send in batches of 50 ro respect Resend rate limits
-    const batchSize = 50
+    const batchSize = 10
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
     let sent = 0
     let failed = 0
 
@@ -34,34 +45,57 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         const batch = emails.slice(i, i + batchSize)
 
         const results = await Promise.allSettled(
-            batch.map(email => 
-                resend.emails.send({
-                    from: 'Cardano Bounties <onboarding@cardanobounties.com>',
-                    to: email,
-                    subject: "Cardano Bounties Beta Testing is Live!",
-                    html: `
-                    <h2>Great news! Cardano Bounties Beta Testing Phase is now live!</h2>
-                    <p>As one of our waitlist members, you're among the first to get access to the platform. We invite you to explore, test the features, and share feedback with us.</p>
-                    <p>Your input will help us improve the platform and ensure we're fully prepared for the mainnet launch.</p>
-                    <br />
-                    <p>
-                    Check out the 
-                    <span>
-                    <a href="https://x.com/cardanobounties/status/2074188787735838938?s=46">post on X</a>
-                    </span> to learn about step-by-step guide on how to test and other necessary details you need.
-                    </p>
+          batch.map((email) =>
+            resend.emails.send({
+              from: "Cardano Bounties <onboarding@cardanobounties.com>",
+              to: email,
+              subject,
+              html: `
+                <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">
+                    <h2 style="color:#0033AD;">${subject}</h2>
+                    <p style="color:#333;line-height:1.8;">${message}</p>
                     <br/>
-                    <br/>
-                    <p>- The Cardano Bounties Team</p>
-                    `
-                })
-            )
-        )
+                    <a href="https://cardanobounties.com" 
+                        style="background:#0033AD;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;">
+                        Visit Cardano Bounties →
+                    </a>
+                    <br/><br/>
+                    <p style="color:#999;font-size:12px;">— The Cardano Bounties Team</p>
+                </div>
+            `,
+            }),
+          ),
+        );
         results.forEach(result => {
             if (result.status === 'fulfilled') sent++
             else failed++
         })
+
+        // Wait 2 seconds between batches to respect rate limits
+        if (i + batchSize < emails.length) {
+            await sleep(2000)
+        }
     }
+
+
+    const { data: users } = await supabaseAdmin
+    .from('users')
+    .select('id')
+
+    if (users && users && users.length > 0) {
+        await supabaseAdmin
+        .from('notifications')
+        .insert(
+            users.map(user => ({
+                user_id: user.id,
+                type: 'announcement',
+                title: subject,
+                message,
+                related_id: null
+            }))
+        )
+    }
+
     
     return NextResponse.json({
         message: 'Announcement sent',

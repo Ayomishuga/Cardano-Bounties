@@ -8,6 +8,7 @@ type NotificationType =
 | 'bounty_rejected'
 | 'new_submission'
 | 'payment_released'
+| 'announcement'
 
 export async function createNotification({
     userId,
