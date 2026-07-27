@@ -3,17 +3,14 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { authFetch } from "@/lib/api";
+import { formatAda } from "@/lib/formatters";
 import styles from "./DashboardPage.module.css";
+import { AdminOperationsShimmer } from "@/components/dashboard/ShimmerLoaders";
 
 type DashboardResponse = {
   metrics: Record<string, number>;
   error?: string;
 };
-
-function formatAda(value: number | string | null | undefined) {
-  const amount = Number(value || 0);
-  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 6 }).format(amount)} ADA`;
-}
 
 export function AdminOperationsPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
@@ -83,14 +80,7 @@ export function AdminOperationsPage() {
   );
 
   if (isLoading) {
-    return (
-      <section className={styles.panel}>
-        <div className={styles.emptyState}>
-          <h2>Loading operations</h2>
-          <p>Fetching current queue counts.</p>
-        </div>
-      </section>
-    );
+    return <AdminOperationsShimmer />;
   }
 
   if (error) {

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/toast/ToastProvider";
 import { authFetch } from "@/lib/api";
 import styles from "./AdminQueue.module.css";
+import { AdminTableBodyShimmer } from "@/components/dashboard/ShimmerLoaders";
 
 type Submission = {
   id: string;
@@ -356,16 +357,7 @@ export function PosterBountiesPage() {
           </thead>
           <tbody>
             {isLoading ? (
-              Array.from({ length: 5 }).map((_, index) => (
-                <tr key={index} aria-hidden="true">
-                  <td><div className={styles.shimmer} style={{ width: "190px" }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: "110px", borderRadius: "999px" }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: "90px", marginLeft: "auto" }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: "40px", marginLeft: "auto" }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: "90px" }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: "24px", marginLeft: "auto" }} /></td>
-                </tr>
-              ))
+              <AdminTableBodyShimmer columns={7} rows={5} />
             ) : error ? (
               <tr>
                 <td colSpan={6}>

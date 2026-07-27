@@ -2,6 +2,132 @@
   background: #fff;
 }
 
+.pageContainer {
+  min-height: 100vh;
+  background:
+    radial-gradient(#edf1f5 0.85px, transparent 0.85px) 0 68px / 12px 12px,
+    linear-gradient(135deg, transparent 0 48.8%, rgba(1, 81, 194, 0.035) 49.4% 50.6%, transparent 51.2%) 0 68px / 210px 210px,
+    #fff;
+}
+
+.mainContent {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 54px 0 86px;
+}
+
+.heroHeader {
+  margin-bottom: 26px;
+}
+
+.heroTitle {
+  max-width: 720px;
+  margin: 0 0 14px;
+  color: var(--ink);
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.heroSubtitle {
+  max-width: 620px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.filterBar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  gap: 14px 18px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-soft);
+}
+
+.searchBox {
+  min-width: 0;
+}
+
+.searchInput {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  padding: 0 14px;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.searchInput:focus {
+  border-color: rgba(1, 81, 194, 0.5);
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+.categoryGroup {
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.categoryChip {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: #5f6570;
+  padding: 0 13px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.categoryChip:hover,
+.chipActive {
+  border-color: transparent;
+  background: var(--blue);
+  color: #fff;
+}
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(220, 38, 38, 0.22);
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #991b1b;
+  padding: 13px 14px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.errorBanner button {
+  min-height: 32px;
+  border: 1px solid rgba(220, 38, 38, 0.24);
+  border-radius: 6px;
+  background: #fff;
+  color: #991b1b;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
 .exploreHero {
   padding: 44px 0 28px;
   background:
@@ -237,6 +363,117 @@
   box-shadow: var(--shadow-soft);
 }
 
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.projectInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.projectInfo .projectLogo,
+.logoFallback {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 8px;
+}
+
+.logoFallback {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: var(--blue-soft);
+  color: var(--blue-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.projectName {
+  min-width: 0;
+  overflow: hidden;
+  color: #343942;
+  font-size: 12px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardTitle {
+  margin: 0;
+  color: #111318;
+  font-size: 19px;
+  font-weight: 650;
+  line-height: 1.25;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.cardTitle a {
+  color: inherit;
+}
+
+.cardTitle a:hover {
+  color: var(--blue);
+}
+
+.cardExcerpt {
+  display: -webkit-box;
+  margin: 12px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.75;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.cardFooter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.rewardBlock,
+.metaBlock {
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.rewardBlock span,
+.metaBlock span:first-child {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rewardBlock strong,
+.metaBlock span:last-child {
+  display: block;
+  margin-top: 6px;
+  color: var(--ink);
+  font-family: var(--font-outfit), "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 650;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
 .bountyCardInReview {
   border-color: rgba(180, 83, 9, 0.28);
   background: linear-gradient(180deg, #fff 0%, #fffbeb 100%);
@@ -439,13 +676,48 @@
   margin-top: 28px;
 }
 
+.paginationBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 28px;
+}
+
 .pagination span {
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
 }
 
+.pageInfo {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.pageBtn {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  color: #353a43;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pageBtn:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }
@@ -495,6 +767,7 @@
 }
 
 @media (max-width: 1024px) {
+  .filterBar,
   .exploreHeroGrid,
   .exploreToolbar {
     grid-template-columns: 1fr;
@@ -523,6 +796,19 @@
 }
 
 @media (max-width: 760px) {
+  .mainContent {
+    width: min(100% - 28px, 1120px);
+    padding-top: 36px;
+  }
+
+  .heroTitle {
+    font-size: 40px;
+  }
+
+  .cardFooter {
+    grid-template-columns: 1fr;
+  }
+
   .exploreHeroGrid {
     padding: 40px 0 26px;
   }
@@ -548,6 +834,14 @@
 }
 
 @media (max-width: 480px) {
+  .heroTitle {
+    font-size: 34px;
+  }
+
+  .filterBar {
+    padding: 14px;
+  }
+
   .exploreHeroCopy h1 {
     font-size: 35px;
   }

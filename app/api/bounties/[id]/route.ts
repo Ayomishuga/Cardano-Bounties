@@ -3,6 +3,24 @@ import { BOUNTY_STATUS } from "@/lib/bountyContract";
 import { supabaseAdmin } from "@/lib/supabase";
 import { createNotification } from "@/lib/notifications";
 
+async function attachContributorProfiles<T extends { contributor_id?: string | null }>(submissions: T[]) {
+  const contributorIds = [...new Set(submissions.map((submission) => submission.contributor_id).filter(Boolean))] as string[];
+
+  if (contributorIds.length === 0) return submissions;
+
+  const { data: users } = await supabaseAdmin
+    .from("users")
+    .select("id, stake_address, display_name, role")
+    .in("id", contributorIds);
+
+  const usersById = new Map((users || []).map((user) => [user.id, user]));
+
+  return submissions.map((submission) => ({
+    ...submission,
+    contributor: submission.contributor_id ? usersById.get(submission.contributor_id) || null : null,
+  }));
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -45,7 +63,12 @@ export async function GET(
     }
   }
 
-  return NextResponse.json(data);
+  const submissions = await attachContributorProfiles(data.submissions || []);
+
+  return NextResponse.json({
+    ...data,
+    submissions,
+  });
 }
 
 // PATCH /api/admin/bounties/[id] -- approve or reject a bounty

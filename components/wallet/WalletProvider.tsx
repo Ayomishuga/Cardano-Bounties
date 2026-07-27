@@ -109,12 +109,14 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const authenticateWallet = useCallback(async (activeWallet: BrowserWallet, activeStakeAddress: string) => {
+  const authenticateWallet = useCallback(async (activeWallet: BrowserWallet, activeStakeAddress: string, activePaymentAddress: string) => {
     setSigningIn(true);
     setError("");
     try {
-      // 1. Get nonce
-      const nonceRes = await fetch(`/api/auth/nonce?address=${activeStakeAddress}`);
+      // 1. Get nonce — also send the payment address so the backend can store it
+      const nonceUrl = `/api/auth/nonce?address=${activeStakeAddress}`
+        + (activePaymentAddress ? `&payment_address=${encodeURIComponent(activePaymentAddress)}` : "");
+      const nonceRes = await fetch(nonceUrl);
       if (!nonceRes.ok) {
         const nonceData = (await nonceRes.json().catch(() => null)) as { error?: string } | null;
         throw new Error(nonceData?.error || "Failed to fetch login challenge from server.");
@@ -179,8 +181,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       setStakeAddress(nextStakeAddress);
       window.localStorage.setItem(STORAGE_WALLET_KEY, nextWalletId);
 
-      // Automatically authenticate on initial connection
-      await authenticateWallet(connectedWallet, nextStakeAddress);
+      // Automatically authenticate on initial connection, passing the payment
+      // address so it gets stored in the DB for future payouts
+      await authenticateWallet(connectedWallet, nextStakeAddress, nextAddress);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to connect wallet.");
       throw err;
@@ -206,7 +209,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     if (!wallet || !stakeAddress) {
       throw new Error("No connected wallet found to authenticate.");
     }
-    await authenticateWallet(wallet, stakeAddress);
+    await authenticateWallet(wallet, stakeAddress, address);
   }, [wallet, stakeAddress, authenticateWallet]);
 
   useEffect(() => {

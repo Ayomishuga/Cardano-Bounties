@@ -6,6 +6,7 @@ import { useToast } from "@/components/toast/ToastProvider";
 import { authFetch } from "@/lib/api";
 import styles from "@/app/pages/DashboardPage.module.css";
 import queueStyles from "@/app/pages/AdminQueue.module.css";
+import { MetricGridShimmer, WorkspaceQueueShimmer, HealthPanelShimmer } from "@/components/dashboard/ShimmerLoaders";
 
 type Submission = {
   id: string;
@@ -260,12 +261,13 @@ export function PosterOverviewPage() {
 
   if (isLoading) {
     return (
-      <section className={styles.panel}>
-        <div className={styles.emptyState}>
-          <h2>Loading dashboard</h2>
-          <p>Fetching your bounty and submission data…</p>
-        </div>
-      </section>
+      <>
+        <MetricGridShimmer />
+        <section className={styles.workspaceGrid}>
+          <WorkspaceQueueShimmer />
+          <HealthPanelShimmer />
+        </section>
+      </>
     );
   }
 
