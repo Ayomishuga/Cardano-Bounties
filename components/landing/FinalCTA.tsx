@@ -8,7 +8,7 @@ export function FinalCTA() {
         <div className="final-cta">
           <h2>Stay in the Loop</h2>
           <div>
-            <p>Get notified when new bounties go live, ecosystem updates land, and ADA rewards are paid out. No noise — only what matters.</p>
+            <p>Get notified when new bounties go live, ecosystem updates land, and ADA rewards are paid out. No noise, only what matters.</p>
             <NewsletterForm />
           </div>
         </div>

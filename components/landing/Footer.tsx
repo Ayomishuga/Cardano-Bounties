@@ -1,5 +1,6 @@
 import Link from "next/link";
 import React from "react";
+import { ContactAdminLink } from "./ContactAdminLink";
 
 export function Footer() {
   return (
@@ -22,7 +23,7 @@ export function Footer() {
           <div>
             <h3>For Projects</h3>
             <a href="#contact">Post a Bounty</a>
-            <a href={`mailto:${process.env.NEXT_PUBLIC_ADMIN_EMAIL || "aanuoluwapo.ay@gmail.com"}`}>Contact Admin</a>
+            <ContactAdminLink />
           </div>
           <div>
             <h3>Community</h3>
