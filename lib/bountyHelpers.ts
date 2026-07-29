@@ -249,7 +249,7 @@ export function getDeadlineState(value: string | null | undefined): string {
   const diff = deadline.getTime() - Date.now();
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
 
-  if (days < 0) return "Reviewing";
+  if (days < 0) return "Past deadline";
   if (days === 0) return "Due today";
   if (days <= 7) return `${days}d left`;
   return "Open";
@@ -264,3 +264,21 @@ export function isBountyInReview(bounty: Bounty): boolean {
   return bounty.status === "in_review";
 }
 
+/**
+ * Returns true when the bounty deadline is within 7 days (but not yet passed).
+ * Used by the poster overview warning banner.
+ */
+export function isExpiringSoon(deadline: string | null | undefined): boolean {
+  if (!deadline) return false;
+  const diff = new Date(deadline).getTime() - Date.now();
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  return days >= 0 && days <= 7;
+}
+
+/**
+ * Returns true when the poster is allowed to extend the bounty deadline.
+ * Bounty must be open and have used fewer than MAX_DEADLINE_EXTENSIONS extensions.
+ */
+export function canExtendDeadline(bounty: Bounty): boolean {
+  return bounty.status === "open" && (bounty.deadline_extended_count ?? 0) < 2;
+}

@@ -9,6 +9,9 @@ type NotificationType =
 | 'new_submission'
 | 'payment_released'
 | 'announcement'
+| 'bounty_expiring_soon'
+| 'bounty_expired'
+| 'bounty_auto_reviewed'
 
 export async function createNotification({
     userId,

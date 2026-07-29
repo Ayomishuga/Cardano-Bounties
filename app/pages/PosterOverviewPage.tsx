@@ -183,6 +183,18 @@ export function PosterOverviewPage() {
   const canGoPrev = selectedIndex > 0;
   const canGoNext = selectedIndex !== -1 && selectedIndex < items.length - 1;
 
+  // Bounties expiring within 7 days — used to show the warning banner
+  const expiringSoon = useMemo(() => {
+    return (data?.queues.bounties || []).filter((bounty) => {
+      if (bounty.status !== "open" || !bounty.deadline) return false;
+      const diff = new Date(bounty.deadline).getTime() - Date.now();
+      const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+      return days >= 0 && days <= 7;
+    });
+  }, [data]);
+
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
   const handleSort = (col: typeof sortCol) => {
     if (sortCol === col) {
       setSortDesc(!sortDesc);
@@ -285,6 +297,50 @@ export function PosterOverviewPage() {
 
   return (
     <>
+      {/* Expiry warning banner */}
+      {expiringSoon.length > 0 && !bannerDismissed ? (
+        <div
+          role="alert"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "12px 16px",
+            marginBottom: 16,
+            background: "color-mix(in srgb, var(--warning, #f59e0b) 12%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--warning, #f59e0b) 40%, transparent)",
+            borderRadius: 8,
+            fontSize: 14,
+            color: "var(--text)",
+          }}
+        >
+          <span style={{ fontSize: 18 }}>⏰</span>
+          <span style={{ flex: 1 }}>
+            <strong>
+              {expiringSoon.length === 1
+                ? "1 bounty expires"
+                : `${expiringSoon.length} bounties expire`}{" "}
+              within 7 days.
+            </strong>{" "}
+            Extend the deadline or let it expire and contact admin for a refund.
+          </span>
+          <Link
+            href="/dashboard/bounties"
+            style={{ fontSize: 13, color: "var(--accent)", textDecoration: "underline", whiteSpace: "nowrap" }}
+          >
+            View bounties
+          </Link>
+          <button
+            type="button"
+            aria-label="Dismiss expiry warning"
+            onClick={() => setBannerDismissed(true)}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 4, lineHeight: 1 }}
+          >
+            ✕
+          </button>
+        </div>
+      ) : null}
+
       {/* Metrics row */}
       <section className={styles.metricGrid} aria-label="Dashboard metrics">
         {metrics.map(({ label, value }) => (

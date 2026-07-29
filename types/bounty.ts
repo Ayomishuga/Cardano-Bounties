@@ -80,6 +80,8 @@ export type Bounty = {
   escrow_last_checked_at?: string | null;
   escrow_verification_attempts?: number | null;
   escrow_verification_error?: string | null;
+  // Deadline extension tracking
+  deadline_extended_count?: number | null;
   // Refund tracking
   refund_tx_hash?: string | null;
   refunded_at?: string | null;
