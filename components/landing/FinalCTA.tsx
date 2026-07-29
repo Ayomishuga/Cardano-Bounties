@@ -1,15 +1,15 @@
 import React from "react";
-import { WaitlistForm } from "./WaitlistForm";
+import { NewsletterForm } from "./NewsletterForm";
 
 export function FinalCTA() {
   return (
-    <section className="final-wrap" id="waitlist">
+    <section className="final-wrap" id="newsletter">
       <div className="container">
         <div className="final-cta">
-          <h2>Be among the first contributors on Cardano Bounties</h2>
+          <h2>Stay in the Loop</h2>
           <div>
-            <p>We&apos;re in pre-launch and building our founding community. Join the waitlist to get notified the moment the first bounties go live.</p>
-            <WaitlistForm />
+            <p>Get notified when new bounties go live, ecosystem updates land, and ADA rewards are paid out. No noise, only what matters.</p>
+            <NewsletterForm />
           </div>
         </div>
       </div>

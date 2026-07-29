@@ -1820,12 +1820,23 @@ svg {
 }
 
 .footer-main a,
+.footer-main button,
 .footer-main p {
   display: block;
   margin-bottom: 10px;
   color: #58606b;
   font-size: 12px;
   line-height: 1.45;
+}
+
+.footer-main button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: inherit;
+  text-align: left;
 }
 
 .footer-bottom {
