@@ -3,6 +3,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/toast/ToastProvider";
 import { authFetch } from "@/lib/api";
+import { Shimmer } from "@/components/dashboard/ShimmerLoaders";
 import styles from "./AdminQueue.module.css";
 import { releaseBountyPayout } from "@/lib/cardano/transactions/bountyEscrow";
 import { useAppWallet } from "@/components/wallet/WalletProvider";
@@ -66,7 +67,7 @@ type AllocationDraft = {
   rank?: string;
 };
 
-// ── Helpers ───────────────────────────────────────────────────
+// ── Helper ────────────────────────────────────────────────────
 function lovelaceToAda(lovelace: number | string | null | undefined) {
   const lv = Number(lovelace || 0);
   return lv / LOVELACE_PER_ADA;
@@ -115,7 +116,7 @@ function rankLabel(rank: number | null) {
   return `${RANK_LABEL[rank] ?? `#${rank}`} `;
 }
 
-// ── Component ─────────────────────────────────────────────────
+// ── Main Component ────────────────────────────────────────────
 export function AdminPayoutsPage() {
   const toast = useToast();
   const { wallet, address } = useAppWallet();
@@ -125,6 +126,8 @@ export function AdminPayoutsPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "needs_allocation" | "ready_to_pay" | "partially_paid" | "completed">("all");
+  const [sortCol, setSortCol] = useState<"title" | "status">("status");
+  const [sortDesc, setSortDesc] = useState(true);
   const [reviewingBountyId, setReviewingBountyId] = useState<string | null>(null);
   const [allocationDrafts, setAllocationDrafts] = useState<Record<string, AllocationDraft>>({});
   const [allocatingSubmissionId, setAllocatingSubmissionId] = useState<string | null>(null);
@@ -137,6 +140,10 @@ export function AdminPayoutsPage() {
   const [selectedAlloc, setSelectedAlloc] = useState<Allocation | null>(null);
   const [selectedBounty, setSelectedBounty] = useState<Bounty | null>(null);
   const [txHash, setTxHash] = useState("");
+  const [resolvingAddress, setResolvingAddress] = useState(false);
+  const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
+  const [resolvedSource, setResolvedSource] = useState<string | null>(null);
+  const [resolveError, setResolveError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExecutingOnChain, setIsExecutingOnChain] = useState(false);
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
@@ -225,13 +232,36 @@ export function AdminPayoutsPage() {
       list = list.filter((b) => b.title.toLowerCase().includes(q));
     }
 
-    if (filter === "needs_allocation") list = list.filter((b) => b.status === "in_review" && !b.winners_finalized);
+    if (filter === "needs_allocation") {
+      list = list.filter((b) => {
+        if (b.winners_finalized) return false;
+        if (b.status === "in_review") return true;
+        if (b.status === "open") {
+          return (b.submissions ?? []).some((sub) => sub.status === "approved");
+        }
+        return false;
+      });
+    }
     if (filter === "ready_to_pay")     list = list.filter((b) => b.status === "payout_pending");
     if (filter === "partially_paid")   list = list.filter((b) => b.status === "partially_paid");
     if (filter === "completed")        list = list.filter((b) => b.status === "completed");
 
     return list;
   }, [data, search, filter]);
+
+  const handleSort = (col: typeof sortCol) => {
+    if (sortCol === col) {
+      setSortDesc(!sortDesc);
+    } else {
+      setSortCol(col);
+      setSortDesc(true);
+    }
+  };
+
+  const renderSortIndicator = (col: typeof sortCol) => {
+    if (sortCol !== col) return null;
+    return sortDesc ? "▼" : "▲";
+  };
 
   const startReview = async (bounty: Bounty) => {
     setReviewingBountyId(bounty.id);
@@ -445,12 +475,41 @@ export function AdminPayoutsPage() {
     setSelectedAlloc(alloc);
     setSelectedBounty(bounty);
     setTxHash("");
+    setResolvedAddress(null);
+    setResolvedSource(null);
+    setResolveError(null);
+    
+    const stake = alloc.users?.stake_address;
+    if (stake) {
+      setResolvingAddress(true);
+      authFetch(`/api/users/resolve-address?stake=${stake}`)
+        .then(async (res) => {
+          const payload = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error(payload.error || "Failed to resolve payment address");
+          }
+          setResolvedAddress(payload.payment_address || null);
+          setResolvedSource(payload.source || "blockfrost");
+        })
+        .catch((err) => {
+          setResolveError(err instanceof Error ? err.message : "Unable to resolve payment address.");
+        })
+        .finally(() => {
+          setResolvingAddress(false);
+        });
+    } else {
+      setResolveError("Contributor stake address is missing.");
+    }
   };
 
   const closeModal = () => {
     setSelectedAlloc(null);
     setSelectedBounty(null);
     setTxHash("");
+    setResolvingAddress(false);
+    setResolvedAddress(null);
+    setResolvedSource(null);
+    setResolveError(null);
   };
 
   useEffect(() => {
@@ -491,9 +550,9 @@ export function AdminPayoutsPage() {
       toast.error("Wallet required", "Connect a wallet to execute on-chain payouts.");
       return;
     }
-    const recipientAddress = selectedAlloc.users?.stake_address;
+    const recipientAddress = resolvedAddress;
     if (!recipientAddress) {
-      toast.error("Data missing", "Contributor stake address is missing.");
+      toast.error("Address missing", "Could not resolve a payment address for the contributor.");
       return;
     }
     if (!selectedBounty.escrow_tx_hash) {
@@ -538,7 +597,8 @@ export function AdminPayoutsPage() {
           const updatedAllocs = (b.allocations ?? []).map((a) =>
             a.id === allocId ? { ...a, status: "paid" as AllocationStatus, transaction_hash: hash } : a,
           );
-          const bountyStatus = newBountyStatus ?? b.status;
+          const hasAlloc = (b.allocations ?? []).some(a => a.id === allocId);
+          const bountyStatus = (hasAlloc && newBountyStatus) ? newBountyStatus : b.status;
           return { ...b, allocations: updatedAllocs, status: bountyStatus };
         });
       return {
@@ -562,7 +622,7 @@ export function AdminPayoutsPage() {
     }
   };
 
-  // ── Render ────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────
   return (
     <div className={styles.container}>
       {/* Controls */}
@@ -653,10 +713,14 @@ export function AdminPayoutsPage() {
           <table className={styles.table} role="grid" aria-label="Bounty Payouts">
             <thead>
               <tr>
-                <th><div className={styles.thContent}>Bounty</div></th>
+                <th data-sortable="true" onClick={() => handleSort("title")} aria-sort={sortCol === "title" ? (sortDesc ? "descending" : "ascending") : "none"}>
+                  <div className={styles.thContent}>Bounty {renderSortIndicator("title")}</div>
+                </th>
                 <th><div className={styles.thContent}>Payout type</div></th>
                 <th><div className={styles.thContent}>Reward pool</div></th>
-                <th><div className={`${styles.thContent} ${styles.right}`}>Bounty status</div></th>
+                <th data-sortable="true" onClick={() => handleSort("status")} aria-sort={sortCol === "status" ? (sortDesc ? "descending" : "ascending") : "none"}>
+                  <div className={`${styles.thContent} ${styles.right}`}>Bounty status {renderSortIndicator("status")}</div>
+                </th>
                 <th><div className={`${styles.thContent} ${styles.right}`}>Actions</div></th>
               </tr>
             </thead>
@@ -1091,7 +1155,24 @@ export function AdminPayoutsPage() {
                 <div className={styles.contentBlock}>
                   <div className={styles.contentLabel}>Recipient stake address</div>
                   <div className={styles.contentValue} style={{ fontFamily: "ui-monospace, monospace", fontSize: 12, wordBreak: "break-all" }}>
-                    {selectedAlloc.users?.stake_address || "Address not recorded"}
+                    {resolvingAddress ? (
+                      <Shimmer style={{ height: "16px", width: "100%", borderRadius: "4px" }} />
+                    ) : resolvedAddress ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <span style={{ color: "var(--foreground)" }}>{resolvedAddress}</span>
+                        {resolvedSource && (
+                          <span style={{ fontSize: "10px", color: "var(--muted)", alignSelf: "flex-start", padding: "2px 6px", borderRadius: "4px", backgroundColor: "var(--border)" }}>
+                            Resolved via {resolvedSource}
+                          </span>
+                        )}
+                      </div>
+                    ) : resolveError ? (
+                      <span style={{ color: "#dc2626", fontSize: 11, fontWeight: 500 }}>
+                        ⚠️ {resolveError}
+                      </span>
+                    ) : (
+                      <span style={{ color: "var(--muted)", fontStyle: "italic" }}>No payment address resolved</span>
+                    )}
                   </div>
                 </div>
                 <div className={styles.contentBlock}>

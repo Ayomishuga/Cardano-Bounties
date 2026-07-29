@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/toast/ToastProvider";
 import { authFetch } from "@/lib/api";
 import styles from "./AdminQueue.module.css";
+import { AdminTableBodyShimmer } from "@/components/dashboard/ShimmerLoaders";
 
 type Bounty = {
   id: string;
@@ -282,17 +283,7 @@ export function AdminHuntersPage() {
           </thead>
           <tbody>
             {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} aria-hidden="true">
-                  <td><div className={styles.shimmer} style={{ width: '120px' }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: '40px', marginLeft: 'auto' }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: '40px', marginLeft: 'auto' }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: '80px', marginLeft: 'auto' }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: '40px', marginLeft: 'auto' }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: '70px' }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: '24px', marginLeft: 'auto' }} /></td>
-                </tr>
-              ))
+              <AdminTableBodyShimmer columns={8} rows={5} />
             ) : error ? (
               <tr>
                 <td colSpan={7}>

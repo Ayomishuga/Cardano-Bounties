@@ -1,0 +1,28 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.row {
+  width: 100%;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    #f1f3f5 0%,
+    #e8eaed 50%,
+    #f1f3f5 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}

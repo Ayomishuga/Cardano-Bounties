@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/toast/ToastProvider";
 import { authFetch } from "@/lib/api";
 import styles from "./AdminQueue.module.css";
+import { AdminTableBodyShimmer } from "@/components/dashboard/ShimmerLoaders";
 
 type Submission = {
   id: string;
@@ -30,6 +31,7 @@ type Bounty = {
   description?: string | null;
   bounty_instructions?: string | null;
   deadline?: string | null;
+  deadline_extended_count?: number | null;
   project_name?: string | null;
   project_logo_url?: string | null;
   reward_amount?: number | string | null;
@@ -139,6 +141,7 @@ export function PosterBountiesPage() {
   const [selectedBountyId, setSelectedBountyId] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
   const [verifyingBountyId, setVerifyingBountyId] = useState<string | null>(null);
+  const [extendingBountyId, setExtendingBountyId] = useState<string | null>(null);
 
   const loadBounties = useCallback(async () => {
     setIsLoading(true);
@@ -280,6 +283,25 @@ export function PosterBountiesPage() {
     }
   }
 
+  async function handleExtendDeadline(bounty: Bounty, newDeadline: string) {
+    setExtendingBountyId(bounty.id);
+    try {
+      const response = await authFetch(`/api/bounties/${bounty.id}/extend`, {
+        method: "PATCH",
+        body: JSON.stringify({ new_deadline: newDeadline }),
+        headers: { Accept: "application/json" },
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Unable to extend deadline.");
+      await loadBounties();
+      toast.success("Deadline Extended", `New deadline set to ${newDeadline}.`);
+    } catch (err) {
+      toast.error("Extension failed", err instanceof Error ? err.message : "Unable to extend deadline.");
+    } finally {
+      setExtendingBountyId(null);
+    }
+  }
+
   return (
     <div className={styles.container}>
       <section className={styles.tableWrap}>
@@ -302,6 +324,7 @@ export function PosterBountiesPage() {
             ["open", "Open"],
             ["in_review", "In review"],
             ["completed", "Completed"],
+            ["expired", "Expired"],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -356,16 +379,7 @@ export function PosterBountiesPage() {
           </thead>
           <tbody>
             {isLoading ? (
-              Array.from({ length: 5 }).map((_, index) => (
-                <tr key={index} aria-hidden="true">
-                  <td><div className={styles.shimmer} style={{ width: "190px" }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: "110px", borderRadius: "999px" }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: "90px", marginLeft: "auto" }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: "40px", marginLeft: "auto" }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: "90px" }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: "24px", marginLeft: "auto" }} /></td>
-                </tr>
-              ))
+              <AdminTableBodyShimmer columns={7} rows={5} />
             ) : error ? (
               <tr>
                 <td colSpan={6}>
@@ -461,9 +475,11 @@ export function PosterBountiesPage() {
           canGoNext={canGoNext}
           canGoPrev={canGoPrev}
           copyStatus={copyStatus}
+          isExtending={extendingBountyId === selectedItem.id}
           isVerifying={verifyingBountyId === selectedItem.id}
           onClose={() => setSelectedBountyId(null)}
           onCopy={handleCopy}
+          onExtendDeadline={handleExtendDeadline}
           onNext={() => setSelectedBountyId(items[selectedIndex + 1]?.id || null)}
           onPrev={() => setSelectedBountyId(items[selectedIndex - 1]?.id || null)}
           onRetryEscrow={handleRetryEscrow}
@@ -478,9 +494,11 @@ function PosterBountyModal({
   canGoNext,
   canGoPrev,
   copyStatus,
+  isExtending,
   isVerifying,
   onClose,
   onCopy,
+  onExtendDeadline,
   onNext,
   onPrev,
   onRetryEscrow,
@@ -489,14 +507,29 @@ function PosterBountyModal({
   canGoNext: boolean;
   canGoPrev: boolean;
   copyStatus: "idle" | "copied";
+  isExtending: boolean;
   isVerifying: boolean;
   onClose: () => void;
   onCopy: (value: string) => void;
+  onExtendDeadline: (bounty: Bounty, newDeadline: string) => Promise<void>;
   onNext: () => void;
   onPrev: () => void;
   onRetryEscrow: (bounty: Bounty) => Promise<void>;
 }) {
   const counts = getReviewCounts(bounty);
+  const [extendMode, setExtendMode] = useState(false);
+  const [newDeadline, setNewDeadline] = useState("");
+
+  const extensionsUsed = bounty.deadline_extended_count ?? 0;
+  const extensionsRemaining = 2 - extensionsUsed;
+  const canExtend = bounty.status === "open" && extensionsUsed < 2;
+
+  // Compute the minimum allowed date (today + 7 days) for the date picker
+  const minDate = (() => {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() + 7);
+    return d.toISOString().slice(0, 10);
+  })();
 
   return (
     <div className={styles.modalBackdrop} onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
@@ -624,6 +657,42 @@ function PosterBountyModal({
           </section>
         </div>
 
+        {/* Inline extend-deadline form */}
+        {extendMode && canExtend ? (
+          <div style={{ padding: "12px 20px", borderTop: "1px solid var(--line)", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <label htmlFor="new-deadline-input" style={{ fontSize: 13, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+              New deadline:
+            </label>
+            <input
+              id="new-deadline-input"
+              type="date"
+              min={minDate}
+              value={newDeadline}
+              onChange={(e) => setNewDeadline(e.target.value)}
+              style={{ flex: 1, minWidth: 140, padding: "6px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--text)", fontSize: 13 }}
+            />
+            <button
+              type="button"
+              className={styles.approveBtn}
+              style={{ padding: "6px 14px", fontSize: 13, minHeight: "auto" }}
+              disabled={!newDeadline || isExtending}
+              onClick={() => {
+                if (newDeadline) void onExtendDeadline(bounty, newDeadline).then(() => setExtendMode(false));
+              }}
+            >
+              {isExtending ? <div className={styles.spinner} /> : "Confirm"}
+            </button>
+            <button
+              type="button"
+              className={styles.clearFilterBtn}
+              style={{ padding: "6px 14px", fontSize: 13, minHeight: "auto" }}
+              onClick={() => { setExtendMode(false); setNewDeadline(""); }}
+            >
+              Cancel
+            </button>
+          </div>
+        ) : null}
+
         <div className={styles.modalFooter}>
           <div className={styles.navControls}>
             <button type="button" className={styles.navBtn} disabled={!canGoPrev} aria-label="Previous bounty" onClick={onPrev}>
@@ -636,6 +705,16 @@ function PosterBountyModal({
           {canRetryEscrow(bounty) ? (
             <button type="button" className={styles.approveBtn} disabled={isVerifying} onClick={() => void onRetryEscrow(bounty)}>
               {isVerifying ? <div className={styles.spinner} /> : "Retry verification"}
+            </button>
+          ) : null}
+          {canExtend && !extendMode ? (
+            <button
+              type="button"
+              className={styles.clearFilterBtn}
+              title={`${extensionsRemaining} extension${extensionsRemaining === 1 ? "" : "s"} remaining`}
+              onClick={() => setExtendMode(true)}
+            >
+              Extend deadline
             </button>
           ) : null}
           {bounty.status === "open" || bounty.status === "in_review" ? (

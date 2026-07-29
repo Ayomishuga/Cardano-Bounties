@@ -10,106 +10,17 @@ import { useAppWallet } from "@/components/wallet/WalletProvider";
 import { authFetch } from "@/lib/api";
 import styles from "./BountyDetailsPage.module.css";
 
-type Bounty = {
-  id: string;
-  title: string;
-  description: string;
-  type: string | null;
-  reward_amount: number | string | null;
-  deadline: string | null;
-  created_at: string | null;
-  created_by?: string | null;
-  status?: string | null;
-  project_name?: string | null;
-  project_logo_url?: string | null;
-  bounty_instructions?: string | null;
-  payout_type?: string | null;
-  max_winners?: number | null;
-  prize_structure?: Array<{ rank: number; amount_lovelace: number }> | null;
-  projects?: {
-    name?: string | null;
-    logo_url?: string | null;
-  } | null;
-  submissions?: BountySubmission[] | null;
-};
-
-type BountySubmission = {
-  id: string;
-  contributor_id: string | null;
-  status: string | null;
-  submitted_at: string | null;
-  reviewed_at: string | null;
-};
+import { type Bounty, type Submission as BountySubmission } from "@/types/bounty";
+import { formatAda, formatDate, normalizeStatus, shortId } from "@/lib/formatters";
+import { isAcceptingContributions, getBountyState, getProjectName, getProjectLogoUrl } from "@/lib/bountyHelpers";
 
 type DetailTab = "brief" | "instructions" | "contributions" | "submit" | "details";
-
-function formatAda(value: Bounty["reward_amount"]) {
-  if (value === null || value === undefined || value === "") return "Reward TBD";
-  const amount = Number(value);
-  if (Number.isNaN(amount)) return `${value} ADA`;
-  return `${new Intl.NumberFormat("en-US").format(amount)} ADA`;
-}
-
-function formatDate(value: string | null) {
-  if (!value) return "Rolling";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Rolling";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
-}
-
-function getDeadlineLabel(value: string | null) {
-  if (!value) return "Open deadline";
-  const deadline = new Date(value);
-  if (Number.isNaN(deadline.getTime())) return "Open deadline";
-
-  const days = Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  if (days < 0) return "Deadline passed";
-  if (days === 0) return "Due today";
-  if (days <= 7) return `${days} days left`;
-  return "Open";
-}
-
-function getBountyStatusLabel(status: string | null | undefined, deadline: string | null) {
-  if (status === "in_review") return "In review";
-  if (status === "open") return getDeadlineLabel(deadline);
-  return normalizeStatus(status || "Unavailable");
-}
-
-function isAcceptingContributions(status: string | null | undefined) {
-  return status === "open";
-}
 
 function splitBrief(description: string) {
   return description
     .split(/\n+/)
     .map((part) => part.trim())
     .filter(Boolean);
-}
-
-function formatContributor(value: string | null) {
-  if (!value) return "Unknown contributor";
-  if (value.length <= 14) return value;
-  return `${value.slice(0, 8)}...${value.slice(-6)}`;
-}
-
-function normalizeStatus(status: string | null) {
-  if (!status) return "Submitted";
-  return status
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function getProjectName(bounty: Bounty) {
-  return bounty.project_name || bounty.projects?.name || "Independent bounty";
-}
-
-function getProjectLogoUrl(bounty: Bounty) {
-  return bounty.project_logo_url || bounty.projects?.logo_url || "";
 }
 
 export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
@@ -350,7 +261,7 @@ export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
                 </div>
                 <div>
                   <span>Status</span>
-                  <strong>{getBountyStatusLabel(bounty.status, bounty.deadline)}</strong>
+                  <strong>{getBountyState(bounty)}</strong>
                 </div>
                 {!acceptsContributions ? (
                   <div className={styles.reviewStatusNotice}>
@@ -458,7 +369,7 @@ export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
                         {submissions.map((submission) => (
                           <div className={styles.contributorTableRow} role="row" key={submission.id}>
                             <span role="cell">
-                              <strong>{formatContributor(submission.contributor_id)}</strong>
+                              <strong>{shortId(submission.contributor_id) || "Unknown contributor"}</strong>
                               <small>{submission.contributor_id || "Contributor ID unavailable"}</small>
                             </span>
                             <span role="cell">{formatDate(submission.submitted_at)}</span>
@@ -547,7 +458,7 @@ export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
                               ? "Connect wallet first"
                               : !isAuthenticated
                                 ? "Sign wallet verification first"
-                                : `Submitting as ${formatContributor(address)}`}
+                                : `Submitting as ${shortId(address) || "Unknown contributor"}`}
                           </span>
                         </div>
                       </form>

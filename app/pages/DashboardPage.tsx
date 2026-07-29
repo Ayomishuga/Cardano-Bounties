@@ -8,6 +8,7 @@ import { useAppWallet } from "@/components/wallet/WalletProvider";
 import { useToast } from "@/components/toast/ToastProvider";
 import { authFetch } from "@/lib/api";
 import styles from "./DashboardPage.module.css";
+import { MetricGridShimmer, WorkspaceQueueShimmer, HealthPanelShimmer, AdminTableShimmer } from "@/components/dashboard/ShimmerLoaders";
 
 type Bounty = {
   id: string;
@@ -503,12 +504,17 @@ export function DashboardPage() {
             </div>
           </section>
         ) : isLoading ? (
-          <section className={styles.panel}>
-            <div className={styles.emptyState}>
-              <h2>Loading dashboard</h2>
-              <p>Fetching live bounty and submission queues.</p>
-            </div>
-          </section>
+          <>
+            <MetricGridShimmer />
+            {dashboardRole === "admin" ? (
+              <AdminTableShimmer columns={7} rows={6} />
+            ) : (
+              <section className={styles.workspaceGrid}>
+                <WorkspaceQueueShimmer />
+                <HealthPanelShimmer />
+              </section>
+            )}
+          </>
         ) : error ? (
           <section className={styles.panel}>
             <div className={styles.emptyState}>

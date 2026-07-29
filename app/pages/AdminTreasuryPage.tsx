@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { authFetch } from "@/lib/api";
 import styles from "./AdminQueue.module.css";
 import Link from "next/link";
+import { AdminTableBodyShimmer } from "@/components/dashboard/ShimmerLoaders";
 
 type Bounty = {
   id: string;
@@ -178,15 +179,7 @@ export function AdminTreasuryPage() {
           </thead>
           <tbody>
             {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <tr key={i} aria-hidden="true">
-                  <td><div className={styles.shimmer} style={{ width: '180px' }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: '100px' }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: '80px', borderRadius: '999px' }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: '250px' }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: '24px', marginLeft: 'auto' }} /></td>
-                </tr>
-              ))
+              <AdminTableBodyShimmer columns={6} rows={5} />
             ) : error ? (
               <tr>
                 <td colSpan={5}>

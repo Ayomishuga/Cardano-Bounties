@@ -14,16 +14,34 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  ),
   title: "Cardano Bounties - Learn, Contribute & Earn on Cardano",
   description:
     "An open platform where anyone regardless of experience or skill level can contribute to the Cardano ecosystem. Explore tasks, build in public, and earn ADA while contributing to real projects.",
   openGraph: {
+    title: "Cardano Bounties - Learn, Contribute & Earn on Cardano",
+    description:
+      "Explore bounties, build in public, and earn ADA while contributing to real Cardano projects.",
+    url: "/",
+    siteName: "Cardano Bounties",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image.jpg",
+        width: 1024,
+        height: 512,
         alt: "Cardano Bounties platform - open bounties for the Cardano ecosystem",
       },
     ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Cardano Bounties - Learn, Contribute & Earn on Cardano",
+    description:
+      "Explore bounties, build in public, and earn ADA while contributing to real Cardano projects.",
+    images: ["/og-image.jpg"],
   },
   icons: {
     icon: [
@@ -33,6 +51,7 @@ export const metadata: Metadata = {
     apple: "/favicon.png",
   },
 };
+
 
 export default function RootLayout({
   children,

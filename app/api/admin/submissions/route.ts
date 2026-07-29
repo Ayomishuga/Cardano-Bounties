@@ -11,7 +11,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const status = req.nextUrl.searchParams.get('status')
 
     let query = supabaseAdmin
-    .from('submission')
+    .from('submissions')
     .select(`
         *,
         bounties ( id, title, reward_amount, type ),

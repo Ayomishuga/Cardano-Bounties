@@ -1,143 +1,21 @@
 "use client";
 
+"use client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppWallet } from "@/components/wallet/WalletProvider";
 import { useToast } from "@/components/toast/ToastProvider";
 import { authFetch } from "@/lib/api";
 import styles from "@/app/pages/AdminQueue.module.css";
-
-type Bounty = {
-  id: string;
-  title: string;
-  description?: string | null;
-  bounty_instructions?: string | null;
-  type?: string | null;
-  custom_type?: string | null;
-  deadline?: string | null;
-  reward_amount?: number | string | null;
-  total_funding_amount?: number | string | null;
-  payout_type?: string | null;
-  max_winners?: number | null;
-  prize_structure?: Array<{ rank: number; amount_lovelace: number }> | null;
-  status: string;
-  submissions?: Array<{
-    id: string;
-    status: string;
-    poster_review_status?: string | null;
-  }> | null;
-};
-
-type Submission = {
-  id: string;
-  bounty_id?: string | null;
-  contributor_id?: string | null;
-  content?: string | null;
-  status: string;
-  poster_review_status?: string | null;
-  poster_feedback?: string | null;
-  submitted_at?: string | null;
-  reviewed_at?: string | null;
-  transaction_hash?: string | null;
-  bounties?: Bounty | Bounty[] | null;
-  bounty?: Bounty | null;
-};
+import { type Bounty, type Submission } from "@/types/bounty";
+import { formatAda, formatLovelaceAsAda, normalizeStatus, formatDate, formatDateTime, shortId, formatRelativeTime, getInitials } from "@/lib/formatters";
+import { getSubmissionBounty, getPayoutTypeLabel, getPayoutSummary, getBountyCategoryLabel } from "@/lib/bountyHelpers";
 
 type PosterDashboardResponse = {
   queues?: {
     pending_submission_reviews?: Submission[];
   };
 };
-
-function getSubmissionBounty(submission: Submission) {
-  if (submission.bounty) return submission.bounty;
-  if (!submission.bounties) return null;
-  if (Array.isArray(submission.bounties)) return submission.bounties[0];
-  return submission.bounties;
-}
-
-function formatAda(value: number | string | null | undefined) {
-  const amount = Number(value || 0);
-  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 6 }).format(amount)} ADA`;
-}
-
-function formatLovelaceAsAda(value: number | null | undefined) {
-  return formatAda(Number(value || 0) / 1_000_000);
-}
-
-function normalizeStatus(value: string | null | undefined) {
-  if (!value) return "Pending";
-  return value.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "Not set";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not set";
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "Not recorded";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not recorded";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
-function shortId(value: string | null | undefined) {
-  if (!value) return "Unknown";
-  if (value.length <= 16) return value;
-  return `${value.slice(0, 10)}...${value.slice(-6)}`;
-}
-
-function formatRelativeTime(value: string | null | undefined) {
-  if (!value) return "Not recorded";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not recorded";
-  const seconds = Math.max(1, Math.floor((Date.now() - date.getTime()) / 1000));
-  if (seconds < 60) return "Just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
-
-function getInitials(name: string | null | undefined) {
-  if (!name) return "?";
-  return name.slice(0, 2).toUpperCase();
-}
-
-function getPayoutTypeLabel(value: string | null | undefined) {
-  if (value === "equal_split") return "Equal split";
-  if (value === "manual_split") return "Manual split";
-  return "Single winner";
-}
-
-function getPayoutSummary(bounty: Bounty | null) {
-  if (!bounty) return "Bounty details unavailable";
-  const maxWinners = Number(bounty.max_winners || 1);
-
-  if (bounty.payout_type === "equal_split") {
-    return `Admin will split the pool equally across up to ${maxWinners} approved winner${maxWinners === 1 ? "" : "s"}.`;
-  }
-
-  if (bounty.payout_type === "manual_split") {
-    return `Admin will allocate the pool manually across up to ${maxWinners} approved winner${maxWinners === 1 ? "" : "s"}.`;
-  }
-
-  return "Your recommendation can move one contributor toward the full reward.";
-}
-
-function getBountyCategoryLabel(bounty: Bounty | null) {
-  if (!bounty) return "Unknown";
-  return normalizeStatus(bounty.custom_type || bounty.type || "Unknown");
-}
 
 function getBountySubmissionCount(bounty: Bounty | null) {
   return bounty?.submissions?.length ?? 0;

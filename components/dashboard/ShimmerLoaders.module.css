@@ -1,0 +1,267 @@
+﻿.shimmerWrapper {
+  background-color: var(--line, #e2e8f0);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.4) 20%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0.4) 80%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 900px) {
+  .metricGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 500px) {
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metricCard {
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--shadow-soft, 0 1px 2px rgba(0, 0, 0, 0.05));
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.metricLabel {
+  height: 12px;
+  width: 50%;
+  border-radius: 6px;
+}
+
+.metricValue {
+  height: 24px;
+  width: 70%;
+  border-radius: 6px;
+}
+
+/* Workspace Queue Shimmer */
+.workspaceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+@media (max-width: 900px) {
+  .workspaceGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--shadow-soft, 0 1px 2px rgba(0, 0, 0, 0.05));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line, #e2e8f0);
+}
+
+.headerSubtitle {
+  height: 12px;
+  width: 40px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+.headerTitle {
+  height: 20px;
+  width: 140px;
+  border-radius: 6px;
+}
+.headerBtn {
+  height: 32px;
+  width: 80px;
+  border-radius: 6px;
+}
+
+.queueItem {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line, #e2e8f0);
+}
+
+.itemTitle {
+  height: 16px;
+  width: 60%;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+.itemDesc {
+  height: 12px;
+  width: 40%;
+  border-radius: 4px;
+}
+
+.itemBadge {
+  height: 24px;
+  width: 80px;
+  border-radius: 999px;
+}
+
+.itemAction {
+  height: 32px;
+  width: 100px;
+  border-radius: 6px;
+}
+
+.healthPanel {
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 14px;
+  background: #fff;
+  padding: 18px 20px;
+  box-shadow: var(--shadow-soft, 0 1px 2px rgba(0, 0, 0, 0.05));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.healthTitle {
+  height: 12px;
+  width: 120px;
+  border-radius: 4px;
+}
+.healthMetric {
+  height: 28px;
+  width: 60px;
+  border-radius: 6px;
+}
+.healthBar {
+  height: 6px;
+  width: 100%;
+  border-radius: 999px;
+}
+.healthDesc {
+  height: 36px;
+  width: 100%;
+  border-radius: 4px;
+}
+
+/* Admin Table Shimmer */
+.tableWrap {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 8px;
+  min-height: 200px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--line, #e2e8f0);
+}
+
+.table th {
+  background: #f8fafc;
+  height: 48px;
+}
+
+.thContent {
+  height: 14px;
+  width: 60px;
+  border-radius: 4px;
+}
+
+.tdCell {
+  height: 16px;
+  border-radius: 4px;
+}
+
+/* Admin Operations Shimmer */
+.operationGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.operationCard {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  padding: 18px;
+  box-shadow: var(--shadow-soft);
+}
+
+.managementPanel {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.operationSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+@media (max-width: 900px) {
+  .operationGrid,
+  .operationSummaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 500px) {
+  .operationGrid,
+  .operationSummaryGrid {
+    grid-template-columns: 1fr;
+  }
+}

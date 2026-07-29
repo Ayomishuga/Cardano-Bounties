@@ -12,7 +12,7 @@ import { authFetch } from "@/lib/api";
 import { getEscrowLovelace } from "@/lib/cardano/amounts";
 import { initiateBountyEscrow } from "@/lib/cardano/transactions/bountyEscrow";
 import { MAX_REWARD_ADA, MAX_WINNERS, LOVELACE_PER_ADA, PLATFORM_FEE_RATE, PAYOUT_TYPE } from "@/lib/bountyContract";
-import type { PayoutType } from "@/lib/bountyContract";
+import type { PayoutType } from "@/types/bounty";
 import styles from "./PostBountyPage.module.css";
 
 type BountyForm = {

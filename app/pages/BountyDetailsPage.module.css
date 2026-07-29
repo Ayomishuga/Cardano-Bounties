@@ -2,6 +2,184 @@
   background: #fff;
 }
 
+.pageContainer {
+  min-height: 100vh;
+  background:
+    radial-gradient(#edf1f5 0.85px, transparent 0.85px) 0 68px / 12px 12px,
+    linear-gradient(135deg, transparent 0 48.8%, rgba(1, 81, 194, 0.035) 49.4% 50.6%, transparent 51.2%) 0 68px / 210px 210px,
+    #fff;
+}
+
+.mainContent {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 28px 0 86px;
+}
+
+.breadcrumbBar {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  color: #4b5563;
+  font-size: 13px;
+  font-weight: 700;
+  transition: color 160ms ease;
+}
+
+.backLink:hover {
+  color: var(--blue);
+}
+
+.pageGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 22px;
+  align-items: start;
+}
+
+.leftColumn,
+.rightColumn {
+  min-width: 0;
+}
+
+.rightColumn {
+  position: sticky;
+  top: 92px;
+}
+
+.bountyTitle {
+  max-width: 820px;
+  margin: 0 0 22px;
+  color: var(--ink);
+  font-size: 46px;
+  font-weight: 800;
+  line-height: 1.08;
+}
+
+.tabNav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #f8fafc;
+  padding: 8px;
+  box-shadow: var(--shadow-soft);
+  scrollbar-width: thin;
+}
+
+.tabBtn {
+  min-height: 40px;
+  flex: 0 0 auto;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #4b5563;
+  padding: 0 15px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  outline: none;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.tabBtn:focus-visible {
+  border-color: rgba(1, 81, 194, 0.45);
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+.tabBtn:hover {
+  background: #fff;
+  color: #20242b;
+}
+
+.tabActive {
+  border-color: rgba(1, 81, 194, 0.2);
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(1, 81, 194, 0.2);
+}
+
+.tabPanel {
+  margin-top: 18px;
+  outline: none;
+}
+
+.proseSection,
+.contributionsList,
+.submitForm,
+.noticeBox {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  padding: 24px;
+  box-shadow: var(--shadow-soft);
+}
+
+.proseSection h3,
+.tabHeading,
+.noticeBox h3 {
+  margin: 0 0 12px;
+  color: #111318;
+  font-size: 22px;
+  font-weight: 650;
+}
+
+.proseSection p,
+.noticeBox p {
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.85;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.errorBanner,
+.successBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  padding: 13px 14px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.errorBanner {
+  border: 1px solid rgba(220, 38, 38, 0.22);
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.successBanner {
+  border: 1px solid rgba(22, 163, 74, 0.22);
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.errorBanner button {
+  min-height: 32px;
+  border: 1px solid rgba(220, 38, 38, 0.24);
+  border-radius: 6px;
+  background: #fff;
+  color: #991b1b;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
 .detailsHero,
 .stateSection {
   padding: 44px 0 28px;
@@ -125,6 +303,134 @@
   display: grid;
   gap: 12px;
   padding: 16px;
+}
+
+.projectHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 14px;
+}
+
+.logoFallback {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  flex: 0 0 48px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--blue-soft);
+  color: var(--blue-dark);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.projectHeader .projectLogo {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+}
+
+.projectLabel,
+.rewardLabel {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.projectName {
+  margin: 4px 0 0;
+  color: #111318;
+  font-size: 16px;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.rewardBox {
+  border-radius: 12px;
+  background: var(--blue);
+  color: #fff;
+  padding: 16px;
+}
+
+.rewardBox .rewardLabel {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.rewardAmount {
+  display: block;
+  margin-top: 6px;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.summaryCard .detailsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.detailRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 13px 14px;
+}
+
+.detailRow span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.detailRow strong,
+.detailRow code {
+  color: #111318;
+  font-size: 13px;
+  font-weight: 750;
+  text-align: right;
+}
+
+.prizeBreakdown {
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 14px;
+}
+
+.prizeBreakdown h4 {
+  margin: 0 0 10px;
+  color: #111318;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.prizeBreakdown ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prizeBreakdown li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #4b5563;
+  font-size: 12px;
 }
 
 .submitWorkButton {
@@ -473,6 +779,67 @@
   line-height: 1.7;
 }
 
+.contributionsList {
+  display: grid;
+  gap: 18px;
+}
+
+.submissionsTableWrapper {
+  overflow-x: auto;
+}
+
+.submissionsTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+.submissionsTable th {
+  color: var(--muted);
+  padding: 0 12px 8px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.submissionsTable td {
+  border-bottom: 1px solid var(--line-soft);
+  border-top: 1px solid var(--line-soft);
+  background: #fbfcfe;
+  padding: 13px 12px;
+  color: #4c5562;
+  font-size: 13px;
+}
+
+.submissionsTable td:first-child {
+  border-left: 1px solid var(--line-soft);
+  border-radius: 10px 0 0 10px;
+}
+
+.submissionsTable td:last-child {
+  border-right: 1px solid var(--line-soft);
+  border-radius: 0 10px 10px 0;
+}
+
+.submissionsTable td strong,
+.submissionsTable td small {
+  display: block;
+}
+
+.submissionsTable td strong {
+  color: #20242b;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.submissionsTable td small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .submitSection {
   padding: 0 0 86px;
 }
@@ -487,6 +854,69 @@
 .submitForm {
   display: grid;
   gap: 16px;
+}
+
+.fieldGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.fieldLabel {
+  color: #343942;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.textInput,
+.textareaInput {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  padding: 0 14px;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.textInput:focus,
+.textareaInput:focus {
+  border-color: rgba(1, 81, 194, 0.5);
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+.textInput {
+  height: 44px;
+}
+
+.textareaInput {
+  min-height: 150px;
+  padding-top: 13px;
+  resize: vertical;
+}
+
+.submitBtn {
+  min-height: 42px;
+  justify-self: start;
+  border: 0;
+  border-radius: 6px;
+  background: var(--blue);
+  color: #fff;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(1, 81, 194, 0.22);
+}
+
+.submitBtn:disabled {
+  background: #d8dee8;
+  color: #64748b;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .reviewClosedPanel {
@@ -648,10 +1078,15 @@
 }
 
 @media (max-width: 1024px) {
+  .pageGrid,
   .detailsHeroGrid,
   .detailsGrid,
   .submitGrid {
     grid-template-columns: 1fr;
+  }
+
+  .rightColumn {
+    position: static;
   }
 
   .actionPanel {
@@ -669,6 +1104,15 @@
 }
 
 @media (max-width: 760px) {
+  .mainContent {
+    width: min(100% - 28px, 1120px);
+    padding-top: 22px;
+  }
+
+  .bountyTitle {
+    font-size: 38px;
+  }
+
   .detailsHeroGrid {
     padding: 40px 0 26px;
   }
@@ -680,6 +1124,16 @@
 }
 
 @media (max-width: 480px) {
+  .bountyTitle {
+    font-size: 32px;
+  }
+
+  .tabNav {
+    margin-right: -14px;
+    border-right: 0;
+    border-radius: 14px 0 0 14px;
+  }
+
   .detailsHeroCopy h1,
   .stateCard h1 {
     font-size: 35px;

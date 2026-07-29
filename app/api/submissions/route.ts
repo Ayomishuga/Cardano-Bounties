@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { createNotification } from "@/lib/notifications";
 
+async function getContributorProfile(contributorId: string) {
+  const { data } = await supabaseAdmin
+    .from("users")
+    .select("id, stake_address, display_name, role")
+    .eq("id", contributorId)
+    .single();
+
+  return data || null;
+}
+
 // POST
 export async function POST(req: NextRequest) {
   const contributorId =
@@ -70,5 +80,7 @@ export async function POST(req: NextRequest) {
     relatedId: bounty_id,
   });
 
-  return NextResponse.json(data, { status: 201 });
+  const contributor = await getContributorProfile(contributorId);
+
+  return NextResponse.json({ ...data, contributor }, { status: 201 });
 }

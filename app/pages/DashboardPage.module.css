@@ -1,3 +1,11 @@
+.adminContainer,
+.posterContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
 .dashboardShell {
   min-height: 100vh;
   display: grid;
