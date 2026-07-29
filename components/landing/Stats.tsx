@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 
 const initialStats = [
-  ["200+", "Waitlist members"],
+  ["200+", "Active Users"],
   ["6", "Bounty categories"],
   ["₳ ADA", "Rewards paid on-chain"],
   ["Open", "To all skill levels"],
@@ -12,23 +12,23 @@ export function Stats() {
   const [stats, setStats] = useState(initialStats);
 
   useEffect(() => {
-    async function fetchWaitlistCount() {
+    async function fetchUserCount() {
       try {
         const response = await fetch("/api/waitlist");
         const data = await response.json();
         if (data.count !== undefined) {
           setStats((prev) => {
             const newStats = [...prev];
-            newStats[0] = [`${data.count}`, "Waitlist members"];
+            newStats[0] = [`${data.count}+`, "Active Users"];
             return newStats;
           });
         }
       } catch (error) {
-        console.error("Failed to fetch waitlist count:", error);
+        console.error("Failed to fetch user count:", error);
       }
     }
 
-    fetchWaitlistCount();
+    fetchUserCount();
   }, []);
 
   return (

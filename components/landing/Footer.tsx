@@ -32,9 +32,9 @@ export function Footer() {
             <a href="https://youtube.com/@cardanobounties" target="_blank" rel="noopener noreferrer">Follow us on Youtube</a>
           </div>
         </div>
-        <div className="footer-bottom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap' }}>
+        <div className="footer-bottom" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap" }}>
           <p style={{ margin: 0 }}>© 2026 Cardano Bounties. All rights reserved.</p>
-          <p style={{ margin: 0, textAlign: 'right' }}>Built with ❤️ by <a href="https://x.com/TechKr_Team" target="_blank" rel="noopener noreferrer">TechKR</a> and <a href="https://gimbalabs.com" target="_blank" rel="noopener noreferrer">Gimbalabs</a>.</p>
+          <p style={{ margin: 0, textAlign: "right" }}>Built with ❤️ by <a href="https://x.com/TechKr_Team" target="_blank" rel="noopener noreferrer">TechKR</a> and <a href="https://gimbalabs.com" target="_blank" rel="noopener noreferrer">Gimbalabs</a>.</p>
         </div>
       </div>
     </footer>

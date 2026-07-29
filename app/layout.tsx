@@ -38,10 +38,11 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    site: "@cardanobounties",
     title: "Cardano Bounties - Learn, Contribute & Earn on Cardano",
     description:
       "Explore bounties, build in public, and earn ADA while contributing to real Cardano projects.",
-    images: ["/og-image.jpg"],
+    images: [`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://cardanobounties.com"}/og-image.jpg`],
   },
   icons: {
     icon: [
@@ -51,7 +52,6 @@ export const metadata: Metadata = {
     apple: "/favicon.png",
   },
 };
-
 
 export default function RootLayout({
   children,
