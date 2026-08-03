@@ -11,7 +11,7 @@ import { authFetch } from "@/lib/api";
 import styles from "./BountyDetailsPage.module.css";
 
 import { type Bounty, type Submission as BountySubmission } from "@/types/bounty";
-import { formatAda, formatDate, normalizeStatus, shortId } from "@/lib/formatters";
+import { formatAda, formatDate, normalizeStatus, shortId, isValidUrl } from "@/lib/formatters";
 import { isAcceptingContributions, getBountyState, getProjectName, getProjectLogoUrl } from "@/lib/bountyHelpers";
 
 type DetailTab = "brief" | "instructions" | "contributions" | "submit" | "details";
@@ -34,6 +34,7 @@ export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
   const [submissionSuccess, setSubmissionSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<DetailTab>("brief");
+  const [linkError, setLinkError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -129,12 +130,17 @@ export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
       return;
     }
 
+    if (contributionLink.trim() && !isValidUrl(contributionLink)) {
+      setLinkError("Please enter a valid URL (must start with http:// or https://).");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const content = [
         contributionLink.trim() ? `Contribution link: ${contributionLink.trim()}` : "",
-        contributionNotes.trim() ? `Reviewer notes:\n${contributionNotes.trim()}` : "",
+        contributionNotes.trim() ? `Notes:\n${contributionNotes.trim()}` : "",
       ]
         .filter(Boolean)
         .join("\n\n");
@@ -369,8 +375,14 @@ export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
                         {submissions.map((submission) => (
                           <div className={styles.contributorTableRow} role="row" key={submission.id}>
                             <span role="cell">
-                              <strong>{shortId(submission.contributor_id) || "Unknown contributor"}</strong>
-                              <small>{submission.contributor_id || "Contributor ID unavailable"}</small>
+                              <strong>
+                                {shortId(
+                                  submission.contributor?.stake_address ?? submission.contributor_id
+                                ) || "Unknown contributor"}
+                              </strong>
+                              <small>
+                                {submission.contributor?.stake_address ?? submission.contributor_id ?? "Address unavailable"}
+                              </small>
                             </span>
                             <span role="cell">{formatDate(submission.submitted_at)}</span>
                             <span role="cell">
@@ -429,12 +441,33 @@ export function BountyDetailsPage({ bountyId }: { bountyId: string }) {
                           <label htmlFor="contribution-link">Contribution link</label>
                           <input
                             id="contribution-link"
-                            type="url"
+                            type="text"
                             placeholder="https://github.com/example/submission"
                             value={contributionLink}
                             disabled={!connected || !isAuthenticated || isSubmitting}
-                            onChange={(event) => setContributionLink(event.target.value)}
+                            aria-invalid={!!linkError}
+                            aria-describedby={linkError ? "contribution-link-error" : undefined}
+                            onChange={(event) => {
+                              setContributionLink(event.target.value);
+                              if (linkError) setLinkError("");
+                            }}
+                            onBlur={() => {
+                              if (contributionLink.trim() && !isValidUrl(contributionLink)) {
+                                setLinkError("Please enter a valid URL (must start with http:// or https://).");
+                              } else {
+                                setLinkError("");
+                              }
+                            }}
                           />
+                          {linkError && (
+                            <p
+                              id="contribution-link-error"
+                              role="alert"
+                              style={{ color: "#dc2626", fontSize: 12, marginTop: 4 }}
+                            >
+                              {linkError}
+                            </p>
+                          )}
                         </div>
 
                         <div className={styles.submitField}>

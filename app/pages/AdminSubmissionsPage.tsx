@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/toast/ToastProvider";
 import { authFetch } from "@/lib/api";
+import { ContentWithLinks } from "@/components/shared/ContentWithLinks";
 import styles from "./AdminQueue.module.css";
 import { AdminTableBodyShimmer } from "@/components/dashboard/ShimmerLoaders";
 
@@ -629,15 +630,9 @@ export function AdminSubmissionsPage() {
                   })()}
                 </div>
                 <div className={styles.contentBlock}>
-                  <div className={styles.contentLabel}>Submission content</div>
+                  <div className={styles.contentLabel}>Contributor note</div>
                   <div className={styles.contentValue}>
-                    {selectedItem.content?.startsWith("http") ? (
-                      <a href={selectedItem.content} target="_blank" rel="noopener noreferrer" className={styles.contentLink}>
-                        {selectedItem.content}
-                      </a>
-                    ) : (
-                      selectedItem.content || "No submission content provided."
-                    )}
+                    <ContentWithLinks content={selectedItem.content} linkClassName={styles.contentLink} />
                   </div>
                 </div>
                 <div className={styles.contentBlock}>

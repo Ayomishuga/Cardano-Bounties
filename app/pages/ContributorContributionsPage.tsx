@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { authFetch } from "@/lib/api";
+import { ContentWithLinks } from "@/components/shared/ContentWithLinks";
 import styles from "./AdminQueue.module.css";
 import { AdminTableBodyShimmer } from "@/components/dashboard/ShimmerLoaders";
 
@@ -239,7 +240,7 @@ export function ContributorContributionsPage() {
 
   function renderSortIndicator(col: typeof sortCol) {
     if (sortCol !== col) return null;
-    return sortDesc ? " v" : " ^";
+    return sortDesc ? " ↓" : " ↑";
   }
 
   async function handleCopy(value: string) {
@@ -491,15 +492,9 @@ function ContributionModal({
             </div>
 
             <div className={styles.contentBlock}>
-              <div className={styles.contentLabel}>Submission content</div>
+              <div className={styles.contentLabel}>Contributor note</div>
               <div className={`${styles.contentValue} ${!contribution.content ? styles.missingValue : ""}`}>
-                {contribution.content?.startsWith("http") ? (
-                  <a href={contribution.content} target="_blank" rel="noopener noreferrer" className={styles.contentLink}>
-                    {contribution.content}
-                  </a>
-                ) : (
-                  contribution.content || "No submission content provided."
-                )}
+                <ContentWithLinks content={contribution.content} linkClassName={styles.contentLink} />
               </div>
             </div>
 
