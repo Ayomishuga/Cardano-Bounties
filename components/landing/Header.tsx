@@ -3,6 +3,7 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { WalletConnect } from "@/components/wallet/WalletConnect";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { navItems } from "./constants";
 
 export function Header() {
@@ -36,6 +37,7 @@ export function Header() {
 
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <NotificationBell />
+          <ThemeToggle />
           <button
             className="mobile-menu"
             aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}

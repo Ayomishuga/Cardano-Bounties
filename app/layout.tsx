@@ -13,6 +13,19 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const themeScript = `
+(function() {
+  try {
+    var theme = window.localStorage.getItem("cb_theme") === "dark" ? "dark" : "light";
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch (error) {
+    document.documentElement.dataset.theme = "light";
+    document.documentElement.style.colorScheme = "light";
+  }
+})();
+`;
+
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
@@ -59,8 +72,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${outfit.variable} ${inter.variable}`}>
+    <html
+      lang="en"
+      className={`${outfit.variable} ${inter.variable}`}
+      data-theme="light"
+      suppressHydrationWarning
+    >
       <body>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <Providers>{children}</Providers>
       </body>
     </html>

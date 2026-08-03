@@ -1,0 +1,87 @@
+.toggle {
+  position: relative;
+  width: 48px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  color: var(--muted);
+  padding: 0 7px;
+  box-shadow: var(--shadow-soft);
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.toggle:hover {
+  border-color: rgba(1, 81, 194, 0.28);
+  color: var(--blue);
+  box-shadow: 0 10px 24px rgba(1, 81, 194, 0.12);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.sunIcon,
+.moonIcon {
+  position: relative;
+  z-index: 1;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.moonIcon {
+  opacity: 0.52;
+}
+
+.sunIcon {
+  opacity: 1;
+}
+
+.knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--blue);
+  box-shadow: 0 8px 16px rgba(1, 81, 194, 0.24);
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+:global(:root[data-theme="dark"]) .toggle {
+  border-color: rgba(148, 163, 184, 0.26);
+  background: var(--bg-surface-raised);
+  color: var(--text-secondary);
+}
+
+:global(:root[data-theme="dark"]) .knob {
+  transform: translateX(16px);
+  background: var(--accent);
+}
+
+:global(:root[data-theme="dark"]) .sunIcon {
+  opacity: 0.52;
+}
+
+:global(:root[data-theme="dark"]) .moonIcon {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle,
+  .sunIcon,
+  .moonIcon,
+  .knob {
+    transition: none;
+  }
+}

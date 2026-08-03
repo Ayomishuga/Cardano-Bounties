@@ -10,7 +10,7 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: 272px minmax(0, 1fr);
-  background: #f7f9fb;
+  background: var(--bg-section);
   color: var(--ink);
 }
 
@@ -22,7 +22,7 @@
   flex-direction: column;
   overflow: hidden;
   border-right: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--bg-elevated);
   padding: 22px 18px;
 }
 
@@ -46,7 +46,7 @@
   border-radius: 12px;
   background:
     radial-gradient(circle at 88% 14%, rgba(1, 81, 194, 0.1), transparent 34%),
-    #fff;
+    var(--bg-surface);
   padding: 16px;
   box-shadow: var(--shadow-soft);
 }
@@ -63,7 +63,7 @@
 }
 
 .roleCard strong {
-  color: #111318;
+  color: var(--text-strong);
   font-family: var(--font-outfit), "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 15px;
   font-weight: 650;
@@ -99,7 +99,7 @@
   justify-content: space-between;
   gap: 12px;
   border-radius: 9px;
-  color: #5f6570;
+  color: var(--text-muted);
   padding: 0 12px;
   font-size: 13px;
   font-weight: 650;
@@ -115,7 +115,7 @@
 .sideNav b {
   min-width: 24px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--bg-surface);
   color: var(--blue);
   padding: 3px 7px;
   text-align: center;
@@ -131,8 +131,8 @@
   margin-top: auto;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: #fff;
-  color: #353a43;
+  background: var(--bg-surface);
+  color: var(--text-primary);
   padding: 0 12px;
   font-size: 12px;
   font-weight: 650;
@@ -149,7 +149,7 @@
   gap: 8px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 14px;
   box-shadow: var(--shadow-soft);
 }
@@ -164,7 +164,7 @@
 
 .shellWallet strong {
   overflow: hidden;
-  color: #111318;
+  color: var(--text-strong);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 12px;
   text-overflow: ellipsis;
@@ -175,8 +175,8 @@
   min-height: 34px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: #fff;
-  color: #353a43;
+  background: var(--bg-surface);
+  color: var(--text-primary);
   padding: 0 12px;
   font-size: 12px;
   font-weight: 700;
@@ -200,7 +200,7 @@
   gap: 16px;
   padding: 0 32px;
   height: 60px;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--bg-elevated);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--line);
   flex-shrink: 0;
@@ -257,7 +257,7 @@
   justify-content: center;
   border-radius: 6px;
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
   padding: 0 16px;
   font-size: 12px;
   font-weight: 750;
@@ -286,7 +286,7 @@
 
 .topbar h1 {
   max-width: 720px;
-  color: #111318;
+  color: var(--text-strong);
   font-size: 38px;
   font-weight: 800;
   line-height: 1.08;
@@ -327,7 +327,7 @@
   height: 38px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-surface);
   color: var(--ink);
   padding: 0 12px;
   font: inherit;
@@ -348,7 +348,7 @@
   justify-content: center;
   border-radius: 4px;
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
   padding: 0 14px;
   font-size: 12px;
   font-weight: 750;
@@ -361,7 +361,7 @@
   gap: 6px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 5px;
   box-shadow: var(--shadow-soft);
 }
@@ -371,7 +371,7 @@
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: #6f7784;
+  color: var(--text-muted);
   padding: 0 13px;
   font-size: 12px;
   font-weight: 700;
@@ -380,7 +380,7 @@
 
 .roleSwitch .selectedRole {
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .metricGrid {
@@ -396,14 +396,14 @@
 .tablePanel {
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   box-shadow: var(--shadow-soft);
 }
 
 .managementPanel {
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 18px;
   box-shadow: var(--shadow-soft);
 }
@@ -439,7 +439,7 @@
   gap: 8px;
   padding: 24px;
   border-radius: 12px;
-  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  background: linear-gradient(145deg, var(--bg-subtle), var(--bg-subtle));
   border: 1px solid rgba(226, 232, 240, 0.8);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -533,7 +533,7 @@
   height: 38px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-surface);
   color: var(--ink);
   padding: 0 12px;
   font: inherit;
@@ -562,7 +562,7 @@
   gap: 18px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 18px;
   box-shadow: var(--shadow-soft);
 }
@@ -579,7 +579,7 @@
 .operationCard strong {
   display: block;
   margin-top: 16px;
-  color: #111318;
+  color: var(--text-strong);
   font-family: var(--font-outfit), "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 42px;
   font-weight: 750;
@@ -601,7 +601,7 @@
   justify-content: center;
   border-radius: 4px;
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
   padding: 0 14px;
   font-size: 12px;
   font-weight: 750;
@@ -618,14 +618,14 @@
 .operationSummaryGrid div {
   border: 1px solid var(--line-soft);
   border-radius: 12px;
-  background: #fbfcfe;
+  background: var(--bg-surface-muted);
   padding: 16px;
 }
 
 .operationSummaryGrid strong {
   display: block;
   margin-top: 10px;
-  color: #111318;
+  color: var(--text-strong);
   font-size: 22px;
   font-weight: 750;
 }
@@ -654,8 +654,8 @@
 .managementTable td {
   border-top: 1px solid var(--line-soft);
   border-bottom: 1px solid var(--line-soft);
-  background: #fbfcfe;
-  color: #4c5562;
+  background: var(--bg-surface-muted);
+  color: var(--text-secondary);
   padding: 14px 12px;
   font-size: 12px;
   vertical-align: middle;
@@ -664,7 +664,7 @@
 .managementTable td:first-child {
   border-left: 1px solid var(--line-soft);
   border-radius: 10px 0 0 10px;
-  color: #20242b;
+  color: var(--text-primary);
   font-weight: 750;
 }
 
@@ -677,8 +677,8 @@
   min-height: 32px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: #fff;
-  color: #353a43;
+  background: var(--bg-surface);
+  color: var(--text-primary);
   padding: 0 11px;
   font-size: 12px;
   font-weight: 700;
@@ -693,7 +693,7 @@
 .metricCard strong {
   display: block;
   margin-top: 14px;
-  color: #111318;
+  color: var(--text-strong);
   font-family: var(--font-outfit), "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 26px;
   font-weight: 650;
@@ -725,7 +725,7 @@
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 8px;
   box-shadow: var(--shadow-soft);
 }
@@ -736,7 +736,7 @@
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
-  color: #5f6570;
+  color: var(--text-muted);
   padding: 0 14px;
   font-size: 12px;
   font-weight: 750;
@@ -747,7 +747,7 @@
 .workspaceTabs .activeWorkspaceTab {
   border-color: rgba(1, 81, 194, 0.16);
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .reviewWorkspace {
@@ -763,7 +763,7 @@
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   box-shadow: var(--shadow-soft);
 }
 
@@ -799,7 +799,7 @@
 }
 
 .listPaneHeader strong {
-  color: #111318;
+  color: var(--text-strong);
   font-size: 12px;
 }
 
@@ -816,8 +816,8 @@
   gap: 5px;
   border: 1px solid var(--line-soft);
   border-radius: 10px;
-  background: #fbfcfe;
-  color: #4c5562;
+  background: var(--bg-surface-muted);
+  color: var(--text-secondary);
   padding: 12px;
   text-align: left;
   cursor: pointer;
@@ -834,7 +834,7 @@
 .reviewList strong,
 .submissionReviewList strong {
   overflow: hidden;
-  color: #20242b;
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 750;
   text-overflow: ellipsis;
@@ -854,7 +854,7 @@
   height: 6px;
   overflow: hidden;
   border-radius: 999px;
-  background: #e7ecf2;
+  background: var(--line);
 }
 
 .reviewList i b {
@@ -874,7 +874,7 @@
   top: -14px;
   z-index: 1;
   border-bottom: 1px solid var(--line-soft);
-  background: #fff;
+  background: var(--bg-surface);
   color: var(--muted);
   padding: 10px 0;
   font-size: 11px;
@@ -894,8 +894,8 @@
   min-height: 32px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: #fff;
-  color: #5f6570;
+  background: var(--bg-surface);
+  color: var(--text-muted);
   padding: 0 11px;
   font-size: 11px;
   font-weight: 750;
@@ -905,7 +905,7 @@
 .statusFilters .selectedStatusFilter {
   border-color: transparent;
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .detailStack {
@@ -924,7 +924,7 @@
 .detailEmptyState {
   border: 1px solid var(--line-soft);
   border-radius: 12px;
-  background: #fbfcfe;
+  background: var(--bg-surface-muted);
   padding: 16px;
 }
 
@@ -938,7 +938,7 @@
 .detailTitleRow h2,
 .detailEmptyState h2 {
   margin-top: 6px;
-  color: #111318;
+  color: var(--text-strong);
   font-size: 22px;
   font-weight: 750;
   line-height: 1.2;
@@ -958,7 +958,7 @@
 .timeline p,
 .detailEmptyState p {
   margin-top: 10px;
-  color: #4b5563;
+  color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.75;
 }
@@ -976,7 +976,7 @@
   align-items: center;
   gap: 9px;
   margin-top: 10px;
-  color: #4b5563;
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 650;
 }
@@ -987,7 +987,7 @@
   margin-top: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-surface);
   color: var(--ink);
   padding: 12px;
   font: inherit;
@@ -1015,7 +1015,7 @@
 .detailGrid div {
   min-width: 0;
   border-radius: 10px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 12px;
 }
 
@@ -1031,7 +1031,7 @@
   display: block;
   overflow: hidden;
   margin-top: 6px;
-  color: #111318;
+  color: var(--text-strong);
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1046,7 +1046,7 @@
 .stepStrip span {
   border: 1px solid var(--line-soft);
   border-radius: 999px;
-  background: #fbfcfe;
+  background: var(--bg-surface-muted);
   color: var(--muted);
   padding: 8px 10px;
   text-align: center;
@@ -1061,7 +1061,7 @@
 
 .stepStrip span:nth-child(3) {
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .timeline {
@@ -1082,7 +1082,7 @@
   flex: 0 0 10px;
   border: 2px solid var(--blue);
   border-radius: 999px;
-  background: #fff;
+  background: var(--bg-surface);
 }
 
 .detailActionBar {
@@ -1093,7 +1093,7 @@
   gap: 10px;
   margin: auto -18px -18px;
   border-top: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--bg-elevated);
   padding: 14px 18px;
 }
 
@@ -1102,8 +1102,8 @@
   min-height: 38px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: #fff;
-  color: #353a43;
+  background: var(--bg-surface);
+  color: var(--text-primary);
   padding: 0 14px;
   font-size: 12px;
   font-weight: 750;
@@ -1112,14 +1112,14 @@
 
 .detailActionBar button:first-child {
   border-color: rgba(220, 38, 38, 0.22);
-  background: #fef2f2;
-  color: #991b1b;
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
 }
 
 .detailActionBar button:last-child {
   border-color: rgba(1, 81, 194, 0.24);
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .detailActionBar button:disabled {
@@ -1147,7 +1147,7 @@
 
 .panelHeader h2 {
   margin-top: 5px;
-  color: #111318;
+  color: var(--text-strong);
   font-size: 18px;
   font-weight: 650;
 }
@@ -1163,8 +1163,8 @@
   justify-content: center;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: #fff;
-  color: #353a43;
+  background: var(--bg-surface);
+  color: var(--text-primary);
   padding: 0 12px;
   font-size: 12px;
   font-weight: 650;
@@ -1183,7 +1183,7 @@
 .tableActions button:first-child {
   border-color: rgba(1, 81, 194, 0.24);
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .rowActions button:disabled,
@@ -1201,7 +1201,7 @@
 }
 
 .emptyState h2 {
-  color: #111318;
+  color: var(--text-strong);
   font-size: 18px;
   font-weight: 700;
 }
@@ -1225,12 +1225,12 @@
   align-items: center;
   border: 1px solid var(--line-soft);
   border-radius: 10px;
-  background: #fbfcfe;
+  background: var(--bg-surface-muted);
   padding: 14px;
 }
 
 .queueItem h3 {
-  color: #20242b;
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 650;
 }
@@ -1255,7 +1255,7 @@
 }
 
 .queueItem strong {
-  color: #111318;
+  color: var(--text-strong);
   font-family: var(--font-outfit), "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 13px;
   font-weight: 700;
@@ -1265,13 +1265,13 @@
   min-height: 100%;
   background:
     radial-gradient(circle at 80% 0%, rgba(1, 81, 194, 0.12), transparent 32%),
-    #fff;
+    var(--bg-surface);
 }
 
 .healthPanel strong {
   display: block;
   margin-top: 18px;
-  color: #111318;
+  color: var(--text-strong);
   font-family: var(--font-outfit), "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 48px;
   font-weight: 750;
@@ -1284,7 +1284,7 @@
   overflow: hidden;
   margin: 20px 0;
   border-radius: 999px;
-  background: #e7ecf2;
+  background: var(--line);
 }
 
 .progressTrack i {
@@ -1328,14 +1328,14 @@
   min-width: 0;
   border: 1px solid var(--line-soft);
   border-radius: 10px;
-  background: #fbfcfe;
+  background: var(--bg-surface-muted);
   padding: 0 12px;
-  color: #4c5562;
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
 .tableRow span:first-child {
-  color: #20242b;
+  color: var(--text-primary);
   font-weight: 650;
 }
 
@@ -1357,7 +1357,7 @@
 
 .lifecycleNote {
   display: block;
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 11px;
   line-height: 1.5;
 }
@@ -1365,8 +1365,8 @@
 .tableRow b {
   display: inline-flex;
   border-radius: 999px;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
   padding: 5px 9px;
   font-size: 11px;
 }
@@ -1377,7 +1377,7 @@
   margin-top: 7px;
   border: 1px solid rgba(1, 81, 194, 0.22);
   border-radius: 4px;
-  background: #fff;
+  background: var(--bg-surface);
   color: var(--blue-dark);
   padding: 0 9px;
   font-size: 11px;
@@ -1415,7 +1415,7 @@
   gap: 10px;
   border: 1px solid var(--line-soft);
   border-radius: 10px;
-  background: #fbfcfe;
+  background: var(--bg-surface-muted);
   padding: 12px;
 }
 
@@ -1427,7 +1427,7 @@
 }
 
 .submissionGroupHeader h3 {
-  color: #20242b;
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 700;
 }
@@ -1441,8 +1441,8 @@
 .submissionGroupHeader b {
   display: inline-flex;
   border-radius: 999px;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
   padding: 5px 9px;
   font-size: 11px;
 }
@@ -1621,7 +1621,7 @@
   .managementTable tr {
     border: 1px solid var(--line-soft);
     border-radius: 10px;
-    background: #fbfcfe;
+    background: var(--bg-surface-muted);
     padding: 10px;
   }
 
@@ -1676,7 +1676,7 @@
   justify-content: center;
   border-radius: 6px;
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
   padding: 0 16px;
   font-size: 12px;
   font-weight: 750;

@@ -8,9 +8,9 @@
   font-weight: 600;
   text-transform: capitalize;
   line-height: 1;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-secondary, #9aa0a6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--line-soft);
 }
 
 .pill[data-status="open"],
@@ -18,7 +18,7 @@
 .pill[data-status="completed"],
 .pill[data-status="paid"] {
   background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
+  color: var(--status-success-text);
   border-color: rgba(16, 185, 129, 0.25);
 }
 
@@ -28,7 +28,7 @@
 .pill[data-status="pending_escrow"],
 .pill[data-status="payout_pending"] {
   background: rgba(245, 158, 11, 0.12);
-  color: #f59e0b;
+  color: var(--status-warning-text);
   border-color: rgba(245, 158, 11, 0.25);
 }
 
@@ -37,6 +37,6 @@
 .pill[data-status="cancelled"],
 .pill[data-status="expired"] {
   background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
+  color: var(--status-danger-text);
   border-color: rgba(239, 68, 68, 0.25);
 }
