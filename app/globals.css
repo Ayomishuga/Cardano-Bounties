@@ -11,17 +11,46 @@
 }
 
 :root {
-  --blue: #0151c2;
-  --blue-dark: #01419c;
-  --blue-soft: rgba(1, 81, 194, 0.05);
-  --ink: #1e293b;
-  --muted: #64748b;
-  --faint: #94a3b8;
-  --line: #e2e8f0;
-  --line-soft: #f1f3f6;
-  --paper: #ffffff;
-  --wash: #ffffff;
-  --section: #f7f9fb;
+  --accent: #0151c2;
+  --accent-hover: #01419c;
+  --accent-soft: rgba(1, 81, 194, 0.05);
+  --accent-ring: rgba(1, 81, 194, 0.5);
+  --text-primary: #1e293b;
+  --text-strong: #111318;
+  --text-secondary: #64748b;
+  --text-muted: #737a85;
+  --text-faint: #94a3b8;
+  --text-on-accent: #ffffff;
+  --border-default: #e2e8f0;
+  --border-soft: #f1f3f6;
+  --bg-page: #ffffff;
+  --bg-section: #f7f9fb;
+  --bg-surface: #ffffff;
+  --bg-surface-raised: #ffffff;
+  --bg-surface-muted: #fbfcfe;
+  --bg-subtle: #f8fafc;
+  --bg-elevated: rgba(255, 255, 255, 0.94);
+  --bg-header: rgba(255, 255, 255, 0.9);
+  --bg-overlay: rgba(15, 23, 42, 0.45);
+  --grid-dot: #e2e8f0;
+  --grid-line: rgba(1, 81, 194, 0.07);
+  --input-bg: #ffffff;
+  --input-border: #e2e8f0;
+  --input-disabled-bg: #f1f5f9;
+  --table-row-bg: #fbfcfe;
+  --shimmer-base: #f1f3f5;
+  --shimmer-highlight: #e8eaed;
+  --blue: var(--accent);
+  --blue-dark: var(--accent-hover);
+  --blue-soft: var(--accent-soft);
+  --ink: var(--text-primary);
+  --muted: var(--text-secondary);
+  --faint: var(--text-faint);
+  --line: var(--border-default);
+  --line-soft: var(--border-soft);
+  --paper: var(--bg-surface);
+  --wash: var(--bg-page);
+  --section: var(--bg-section);
   --shadow-card: 0 14px 36px rgba(18, 22, 28, 0.055);
   --shadow-soft: 0 8px 22px rgba(18, 22, 28, 0.045);
   --container: min(1120px, calc(100% - 48px));
@@ -35,13 +64,53 @@
   --status-danger-text: #b91c1c;
 }
 
+:root[data-theme="dark"] {
+  --accent: #4f8cff;
+  --accent-hover: #76a7ff;
+  --accent-soft: rgba(79, 140, 255, 0.14);
+  --accent-ring: rgba(79, 140, 255, 0.42);
+  --text-primary: #edf4ff;
+  --text-strong: #f8fbff;
+  --text-secondary: #a8b4c5;
+  --text-muted: #8795aa;
+  --text-faint: #718098;
+  --text-on-accent: #ffffff;
+  --border-default: rgba(148, 163, 184, 0.24);
+  --border-soft: rgba(148, 163, 184, 0.14);
+  --bg-page: #0b111a;
+  --bg-section: #101824;
+  --bg-surface: #131c29;
+  --bg-surface-raised: #172232;
+  --bg-surface-muted: #0f1723;
+  --bg-subtle: #111a27;
+  --bg-elevated: rgba(19, 28, 41, 0.94);
+  --bg-header: rgba(11, 17, 26, 0.86);
+  --bg-overlay: rgba(2, 6, 12, 0.72);
+  --grid-dot: rgba(148, 163, 184, 0.22);
+  --grid-line: rgba(79, 140, 255, 0.16);
+  --input-bg: #101824;
+  --input-border: rgba(148, 163, 184, 0.24);
+  --input-disabled-bg: #111827;
+  --table-row-bg: #101824;
+  --shimmer-base: #111a27;
+  --shimmer-highlight: #223047;
+  --shadow-card: 0 22px 54px rgba(0, 0, 0, 0.34);
+  --shadow-soft: 0 14px 34px rgba(0, 0, 0, 0.28);
+  --status-warning-bg: rgba(245, 158, 11, 0.14);
+  --status-warning-text: #fbbf24;
+  --status-success-bg: rgba(16, 185, 129, 0.14);
+  --status-success-text: #34d399;
+  --status-danger-bg: rgba(239, 68, 68, 0.14);
+  --status-danger-text: #f87171;
+}
+
 html {
   scroll-behavior: smooth;
 }
 
 body {
   min-height: 100vh;
-  background: #ffffff;
+  background: var(--bg-page);
   color: var(--ink);
   font-family: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.5;
@@ -98,8 +167,8 @@ svg {
   left: 0;
   right: 0;
   z-index: 100;
-  border-bottom: 1px solid rgba(232, 235, 239, 0.74);
-  background: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--bg-header);
   backdrop-filter: blur(18px);
 }
 
@@ -173,14 +242,14 @@ svg {
 .nav-links a {
   padding: 8px 12px;
   border-radius: 999px;
-  color: #5f6570;
+  color: var(--text-muted);
   font-size: 12px;
   font-weight: 500;
   transition: background 160ms ease, color 160ms ease;
 }
 
 .nav-links a:hover {
-  background: #f0f3f7;
+  background: var(--bg-subtle);
   color: var(--ink);
 }
 
@@ -193,7 +262,7 @@ svg {
   min-width: 92px;
   border-radius: 4px;
   background: var(--blue);
-  color: white;
+  color: var(--text-on-accent);
   padding: 9px 15px;
   text-align: center;
   font-size: 12px;
@@ -208,7 +277,7 @@ svg {
   height: 42px;
   border: 1px solid var(--line);
   border-radius: 11px;
-  background: white;
+  background: var(--bg-surface);
   place-items: center;
   color: var(--ink);
   cursor: pointer;
@@ -222,9 +291,9 @@ svg {
   border: 1px solid var(--line);
   border-radius: 28px;
   background:
-    radial-gradient(#e2e8f0 1.2px, transparent 1.2px) 0 0 / 12px 12px,
-    linear-gradient(135deg, transparent 0 48.8%, rgba(1, 81, 194, 0.07) 49.4% 50.6%, transparent 51.2%) 0 0 / 210px 210px,
-    linear-gradient(#fff, #fff);
+    radial-gradient(var(--grid-dot) 1.2px, transparent 1.2px) 0 0 / 12px 12px,
+    linear-gradient(135deg, transparent 0 48.8%, var(--grid-line) 49.4% 50.6%, transparent 51.2%) 0 0 / 210px 210px,
+    linear-gradient(var(--bg-surface), var(--bg-surface));
   text-align: center;
   overflow: hidden;
   animation: panHeroGrid 30s linear infinite;
@@ -295,8 +364,8 @@ svg {
   padding: 6px 16px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
-  color: #737a85;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
   font-size: 13px;
   font-weight: 500;
   box-shadow: 0 8px 24px rgba(15, 17, 21, 0.06);
@@ -317,7 +386,7 @@ svg {
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.04em;
-  background-image: linear-gradient(135deg, var(--ink) 20%, var(--blue) 80%);
+  background-image: linear-gradient(135deg, var(--text-strong) 20%, var(--blue) 80%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -327,7 +396,7 @@ svg {
 
 .trust-nudge {
   margin-top: -20px;
-  color: #6d7480;
+  color: var(--text-muted);
   font-size: 12px;
   font-weight: 500;
 }
@@ -375,14 +444,14 @@ svg {
 
 .button-primary {
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
   box-shadow: 0 14px 30px rgba(1, 81, 194, 0.27);
 }
 
 .button-secondary {
   border: 1px solid var(--line);
-  background: #fff;
-  color: #353a43;
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 
 .hero-product-wrapper {
@@ -414,7 +483,7 @@ svg {
   overflow: hidden;
   border: 1px solid rgba(15, 17, 21, 0.06);
   border-radius: 18px;
-  background: white;
+  background: var(--bg-surface);
   box-shadow: 0 12px 30px rgba(15, 17, 21, 0.08);
 }
 
@@ -429,7 +498,7 @@ svg {
   height: 44px;
   padding: 0 16px;
   border-bottom: 1px solid var(--line);
-  background: #fbfbfc;
+  background: var(--bg-surface-muted);
 }
 
 .today-panel {
@@ -486,14 +555,14 @@ svg {
   height: 25px;
   border: 0;
   border-radius: 999px;
-  background: #fff;
-  color: #8a9099;
+  background: var(--bg-surface);
+  color: var(--text-muted);
   font-size: 10px;
 }
 
 .today-cards p {
   margin-top: 14px;
-  color: #8a9099;
+  color: var(--text-muted);
   font-size: 10px;
   line-height: 1.55;
   text-align: left;
@@ -533,7 +602,7 @@ svg {
   height: 7px;
   overflow: hidden;
   border-radius: 999px;
-  background: #e7ecf2;
+  background: var(--line);
 }
 
 .mini-progress i {
@@ -550,13 +619,13 @@ svg {
   margin-top: 17px;
   border-radius: 999px;
   background: #080b10;
-  color: white;
+  color: var(--text-on-accent);
   padding: 9px 9px 9px 17px;
 }
 
 .toast p {
   flex: 1;
-  color: white;
+  color: var(--text-on-accent);
   font-size: 12px;
   line-height: 1.4;
   text-align: left;
@@ -571,7 +640,7 @@ svg {
   justify-content: center;
   border: 0;
   border-radius: 999px;
-  background: white;
+  background: var(--bg-surface);
   color: #111;
   font-size: 16px;
   margin-left: auto;
@@ -603,8 +672,8 @@ svg {
   margin-left: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: white;
-  color: #a0a6b0;
+  background: var(--bg-surface);
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 24px;
 }
@@ -621,13 +690,13 @@ svg {
   flex-direction: column;
   gap: 5px;
   border-right: 1px solid var(--line);
-  background: #fbfbfc;
+  background: var(--bg-surface-muted);
   padding: 18px 13px;
 }
 
 .dashboard-sidebar b {
   padding: 2px 8px 9px;
-  color: #a3a9b4;
+  color: var(--text-muted);
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -639,7 +708,7 @@ svg {
   gap: 9px;
   border-radius: 10px;
   padding: 9px 10px;
-  color: #737985;
+  color: var(--text-muted);
   font-size: 13px;
   font-weight: 650;
 }
@@ -673,7 +742,7 @@ svg {
 .dashboard-toolbar em {
   border-radius: 999px;
   padding: 5px 10px;
-  color: #7a808b;
+  color: var(--text-muted);
   font-size: 10px;
   font-style: normal;
   font-weight: 500;
@@ -681,7 +750,7 @@ svg {
 
 .dashboard-toolbar span.active {
   background: var(--blue);
-  color: white;
+  color: var(--text-on-accent);
 }
 
 .dashboard-toolbar p {
@@ -703,7 +772,7 @@ svg {
 
 .kanban-column h3 {
   margin: 0 0 9px 4px;
-  color: #69707c;
+  color: var(--text-muted);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -714,13 +783,13 @@ svg {
   margin-bottom: 9px;
   border: 1px solid var(--line);
   border-radius: 13px;
-  background: white;
+  background: var(--bg-surface);
   padding: 10px;
   box-shadow: 0 7px 18px rgba(15, 17, 21, 0.05);
 }
 
 .kanban h4 {
-  color: #20242b;
+  color: var(--text-primary);
   font-size: 10px;
   font-weight: 750;
 }
@@ -758,12 +827,12 @@ svg {
 
 .section {
   padding: 86px 0;
-  background: #fff;
+  background: var(--bg-surface);
 }
 
 .stats-section {
   padding: 0 0 82px;
-  background: #fff;
+  background: var(--bg-surface);
 }
 
 .stats-grid {
@@ -775,7 +844,7 @@ svg {
 .stat-card {
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 22px 24px;
   box-shadow: var(--shadow-soft);
 }
@@ -833,7 +902,7 @@ svg {
 .testimonial-card {
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: white;
+  background: var(--bg-surface);
   box-shadow: var(--shadow-soft);
 }
 
@@ -845,7 +914,7 @@ svg {
 .benefit-card.highlight {
   border-color: transparent;
   background: var(--blue);
-  color: white;
+  color: var(--text-on-accent);
   box-shadow: 0 24px 50px rgba(59, 141, 246, 0.24);
 }
 
@@ -862,7 +931,7 @@ svg {
 
 .highlight .icon-box {
   background: rgba(255, 255, 255, 0.2);
-  color: white;
+  color: var(--text-on-accent);
 }
 
 .icon-box svg {
@@ -908,7 +977,7 @@ svg {
 
 .highlight a {
   border-color: rgba(255, 255, 255, 0.38);
-  color: white;
+  color: var(--text-on-accent);
 }
 
 .feature-grid {
@@ -926,7 +995,7 @@ svg {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: #f8fafc;
+  background: var(--bg-subtle);
 }
 
 .task-mock,
@@ -946,7 +1015,7 @@ svg {
   min-height: 33px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: white;
+  background: var(--bg-surface);
   padding: 8px 10px;
 }
 
@@ -957,7 +1026,7 @@ svg {
   place-items: center;
   border: 1.5px solid #cfd5dd;
   border-radius: 5px;
-  color: white;
+  color: var(--text-on-accent);
   font-size: 10px;
   font-weight: 900;
 }
@@ -970,7 +1039,7 @@ svg {
 .task-row p {
   flex: 1;
   margin: 0;
-  color: #2a3038;
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 650;
   line-height: 1.2;
@@ -978,7 +1047,7 @@ svg {
 
 .task-row b {
   border-radius: 6px;
-  background: #e9f2ff;
+  background: var(--accent-soft);
   color: #286bc2;
   padding: 3px 7px;
   font-size: 10px;
@@ -992,7 +1061,7 @@ svg {
 }
 
 .time-row b {
-  color: #2d333b;
+  color: var(--text-primary);
 }
 
 .time-row i {
@@ -1026,7 +1095,7 @@ svg {
   place-items: center;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: white;
+  background: var(--bg-surface);
   color: var(--blue);
   font-size: 18px;
   font-weight: 850;
@@ -1041,7 +1110,7 @@ svg {
   place-items: center;
   flex: 0 0 auto;
   border-radius: 999px;
-  background: #e9f2ff;
+  background: var(--accent-soft);
   color: var(--blue);
   font-size: 11px;
   font-weight: 850;
@@ -1068,7 +1137,7 @@ svg {
 
 /* Feature section replication */
 .soft-section {
-  background: #fff;
+  background: var(--bg-surface);
   padding: 0 0 88px;
 }
 
@@ -1106,7 +1175,7 @@ svg {
   overflow: hidden;
   border: 0;
   border-radius: 16px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 0;
   box-shadow: 0 12px 28px rgba(18, 22, 28, 0.035);
 }
@@ -1145,7 +1214,7 @@ svg {
 }
 
 .feature-copy h3 {
-  color: #111318;
+  color: var(--text-strong);
   font-size: 18px;
   font-weight: 500;
   letter-spacing: 0;
@@ -1209,7 +1278,7 @@ svg {
 .pricing-section {
   padding-top: 78px;
   padding-bottom: 86px;
-  background: #fff;
+  background: var(--bg-surface);
 }
 
 .pricing-section .container,
@@ -1231,14 +1300,14 @@ svg {
   margin: 0 -22px 22px;
   padding: 28px 22px 20px;
   border-radius: 0 0 12px 12px;
-  background: linear-gradient(#fff, #fbfbfc);
+  background: linear-gradient(var(--bg-surface), var(--bg-surface-muted));
 }
 
 .featured .price-head {
   margin-top: 0;
   border-radius: 12px;
   background: var(--blue);
-  color: white;
+  color: var(--text-on-accent);
 }
 
 .price-head span {
@@ -1246,7 +1315,7 @@ svg {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 5px 12px;
-  color: #767d88;
+  color: var(--text-muted);
   font-size: 11px;
   font-weight: 500;
 }
@@ -1258,7 +1327,7 @@ svg {
 
 .price-head p {
   margin-top: 17px;
-  color: #606774;
+  color: var(--text-muted);
   font-size: 11.5px;
 }
 
@@ -1274,7 +1343,7 @@ svg {
 
 .price-head small {
   margin-left: 6px;
-  color: #606774;
+  color: var(--text-muted);
   font-size: 11px;
   font-weight: 500;
 }
@@ -1291,7 +1360,7 @@ svg {
   border: 1px solid #111;
   border-radius: 3px;
   color: #111;
-  background: white;
+  background: var(--bg-surface);
   font-size: 11px;
   font-weight: 600;
 }
@@ -1325,7 +1394,7 @@ svg {
   flex: 0 0 auto;
   border-radius: 999px;
   background: var(--blue);
-  color: white;
+  color: var(--text-on-accent);
   font-size: 9px;
   font-weight: 900;
 }
@@ -1335,7 +1404,7 @@ svg {
   padding-top: 78px;
   padding-bottom: 82px;
   background:
-    linear-gradient(to bottom, #fff 0%, #fff 68%, rgba(255, 255, 255, 0.92) 86%, #fff 100%);
+    linear-gradient(to bottom, var(--bg-surface) 0%, var(--bg-surface) 68%, rgba(255, 255, 255, 0.92) 86%, var(--bg-surface) 100%);
 }
 
 .testimonials-section::after {
@@ -1346,7 +1415,7 @@ svg {
   bottom: 70px;
   height: 120px;
   pointer-events: none;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), var(--bg-surface));
 }
 
 .testimonial-grid {
@@ -1379,26 +1448,26 @@ svg {
 }
 
 .testimonial-card p {
-  color: #8d94a0;
+  color: var(--text-muted);
   font-size: 10px;
   line-height: 1.2;
 }
 
 .testimonial-card b {
   display: block;
-  color: #20242b;
+  color: var(--text-primary);
   font-size: 11.5px;
 }
 
 .testimonial-card blockquote {
-  color: #5f6671;
+  color: var(--text-muted);
   font-size: 11px;
   line-height: 1.55;
 }
 
 .testimonial-card time {
   margin-top: 13px;
-  color: #7d8490;
+  color: var(--text-muted);
   font-size: 10px;
 }
 
@@ -1413,7 +1482,7 @@ svg {
   margin: 38px auto 0;
   border-radius: 3px;
   background: var(--blue);
-  color: white;
+  color: var(--text-on-accent);
   padding: 0 23px;
   font-size: 11px;
   font-weight: 600;
@@ -1422,7 +1491,7 @@ svg {
 }
 
 .center-button:disabled {
-  background: #f1f5f9 !important;
+  background: var(--bg-subtle) !important;
   color: #94a3b8 !important;
   border: 1px solid var(--line);
   cursor: not-allowed;
@@ -1447,7 +1516,7 @@ svg {
   border-radius: 14px;
   background:
     linear-gradient(180deg, rgba(248, 250, 252, 0.88), rgba(255, 255, 255, 0.98)),
-    #fff;
+    var(--bg-surface);
   padding: 20px;
   box-shadow: var(--shadow-soft);
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
@@ -1463,7 +1532,7 @@ svg {
   border-color: rgba(1, 81, 194, 0.18);
   background:
     radial-gradient(circle at 88% 14%, rgba(1, 81, 194, 0.1), transparent 34%),
-    linear-gradient(180deg, #fff, #fbfdff);
+    linear-gradient(180deg, var(--bg-surface), var(--bg-surface-muted));
   color: var(--ink);
   box-shadow: var(--shadow-card);
 }
@@ -1489,34 +1558,34 @@ svg {
 
 .is-featured .poster-card-head > span {
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .poster-card-head p {
-  color: #8d94a0;
+  color: var(--text-muted);
   font-size: 11px;
   line-height: 1.35;
 }
 
 .poster-card-head b {
   display: block;
-  color: #20242b;
+  color: var(--text-primary);
   font-size: 15px;
   font-weight: 650;
 }
 
 .poster-bounty-card.is-featured .poster-card-head p,
 .poster-bounty-card.is-featured > p {
-  color: #5f6671;
+  color: var(--text-muted);
 }
 
 .poster-bounty-card.is-featured .poster-card-head b {
-  color: #20242b;
+  color: var(--text-primary);
 }
 
 .poster-bounty-card > p {
   margin-top: 20px;
-  color: #5f6671;
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.7;
 }
@@ -1533,8 +1602,8 @@ svg {
   min-height: 26px;
   align-items: center;
   border-radius: 999px;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
   padding: 0 9px;
   font-size: 10px;
   font-weight: 750;
@@ -1556,7 +1625,7 @@ svg {
   margin: 38px auto 0;
   border-radius: 4px;
   background: var(--blue);
-  color: white;
+  color: var(--text-on-accent);
   padding: 0 23px;
   font-size: 12px;
   font-weight: 700;
@@ -1567,9 +1636,9 @@ svg {
   padding-top: 78px;
   padding-bottom: 76px;
   background:
-    radial-gradient(#edf1f5 0.8px, transparent 0.8px) 0 0 / 12px 12px,
-    linear-gradient(135deg, transparent 0 48%, rgba(1, 81, 194, 0.035) 49% 51%, transparent 52%) 0 0 / 190px 190px,
-    #fff;
+    radial-gradient(var(--grid-dot) 0.8px, transparent 0.8px) 0 0 / 12px 12px,
+    linear-gradient(135deg, transparent 0 48%, var(--grid-line) 49% 51%, transparent 52%) 0 0 / 190px 190px,
+    var(--bg-surface);
 }
 
 .narrow {
@@ -1587,7 +1656,7 @@ svg {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: white;
+  background: var(--bg-surface);
   box-shadow: 0 8px 20px rgba(15, 17, 21, 0.035);
   transition: border-radius 220ms ease, box-shadow 220ms ease;
 }
@@ -1650,7 +1719,7 @@ svg {
   min-height: 0;
   overflow: hidden;
   padding: 0 18px;
-  color: #7b828e;
+  color: var(--text-muted);
   font-size: 11.5px;
   line-height: 1.7;
   transition: padding-bottom 260ms ease;
@@ -1662,7 +1731,7 @@ svg {
 
 .final-wrap {
   padding: 72px 0 0;
-  background: #fff;
+  background: var(--bg-surface);
 }
 
 .final-wrap .container,
@@ -1678,7 +1747,7 @@ svg {
   min-height: 188px;
   border-radius: 18px;
   background: var(--blue);
-  color: white;
+  color: var(--text-on-accent);
   padding: 38px 64px;
 }
 
@@ -1702,7 +1771,7 @@ svg {
   min-height: 34px;
   margin-top: 20px;
   border-radius: 3px;
-  background: white;
+  background: var(--bg-surface);
   color: var(--blue-dark);
   padding: 0 18px;
   font-size: 11px;
@@ -1721,7 +1790,7 @@ svg {
   height: 44px;
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--bg-elevated);
   padding: 0 16px;
   color: #111;
   font-size: 14px;
@@ -1730,14 +1799,14 @@ svg {
 
 .waitlist-form input:focus {
   outline: none;
-  border-color: #fff;
+  border-color: var(--text-on-accent);
 }
 
 .waitlist-form button {
   height: 44px;
   border: 0;
   border-radius: 6px;
-  background: #fff;
+  background: var(--bg-surface);
   color: var(--blue-dark);
   padding: 0 24px;
   font-size: 13px;
@@ -1748,7 +1817,7 @@ svg {
 }
 
 .waitlist-form button:hover {
-  background: #f8faff;
+  background: var(--accent-soft);
 }
 
 .waitlist-form button:active {
@@ -1771,7 +1840,7 @@ svg {
 }
 
 .waitlist-success h3 {
-  color: #fff;
+  color: var(--text-on-accent);
   font-size: 16px;
   font-weight: 600;
 }
@@ -1784,7 +1853,7 @@ svg {
 
 .site-footer {
   padding: 0 0 24px;
-  background: #fff;
+  background: var(--bg-surface);
 }
 
 .footer-shell {
@@ -1793,8 +1862,8 @@ svg {
   border-radius: 0 0 18px 18px;
   padding: 58px 64px 26px;
   background:
-    radial-gradient(#edf1f5 1px, transparent 1px) 0 0 / 12px 12px,
-    #fff;
+    radial-gradient(var(--grid-dot) 1px, transparent 1px) 0 0 / 12px 12px,
+    var(--bg-surface);
 }
 
 .footer-main {
@@ -1807,14 +1876,14 @@ svg {
 .footer-brand p {
   max-width: 220px;
   margin-top: 22px;
-  color: #717883;
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.65;
 }
 
 .footer-main h3 {
   margin-bottom: 16px;
-  color: #343942;
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 650;
 }
@@ -1824,7 +1893,7 @@ svg {
 .footer-main p {
   display: block;
   margin-bottom: 10px;
-  color: #58606b;
+  color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -1847,12 +1916,12 @@ svg {
   gap: 16px;
   border-top: 1px solid var(--line);
   padding-top: 24px;
-  color: #858c97;
+  color: var(--text-muted);
   font-size: 11px;
 }
 
 .footer-bottom a {
-  color: #343942;
+  color: var(--text-primary);
   font-weight: 500;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -1882,15 +1951,15 @@ svg {
 }
 
 .explore-page {
-  background: #fff;
+  background: var(--bg-surface);
 }
 
 .explore-hero {
   padding: 44px 0 28px;
   background:
-    radial-gradient(#edf1f5 0.85px, transparent 0.85px) 0 0 / 12px 12px,
-    linear-gradient(135deg, transparent 0 48.8%, rgba(1, 81, 194, 0.035) 49.4% 50.6%, transparent 51.2%) 0 0 / 210px 210px,
-    #fff;
+    radial-gradient(var(--grid-dot) 0.85px, transparent 0.85px) 0 0 / 12px 12px,
+    linear-gradient(135deg, transparent 0 48.8%, var(--grid-line) 49.4% 50.6%, transparent 51.2%) 0 0 / 210px 210px,
+    var(--bg-surface);
 }
 
 .explore-hero-grid {
@@ -1923,7 +1992,7 @@ svg {
   gap: 12px;
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-elevated);
   padding: 16px;
   box-shadow: var(--shadow-card);
 }
@@ -1934,7 +2003,7 @@ svg {
   justify-content: space-between;
   gap: 16px;
   border-radius: 12px;
-  background: #f8fafc;
+  background: var(--bg-subtle);
   padding: 15px 16px;
 }
 
@@ -1977,7 +2046,7 @@ svg {
   height: 44px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-surface);
   color: var(--ink);
   padding: 0 14px;
   font: inherit;
@@ -2002,8 +2071,8 @@ svg {
   min-height: 36px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: #fff;
-  color: #5f6570;
+  background: var(--bg-surface);
+  color: var(--text-muted);
   padding: 0 13px;
   font-size: 12px;
   font-weight: 600;
@@ -2015,7 +2084,7 @@ svg {
 .type-filters button.is-active {
   border-color: transparent;
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .bounty-grid {
@@ -2031,7 +2100,7 @@ svg {
   scroll-margin-top: 92px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 20px;
   box-shadow: var(--shadow-soft);
 }
@@ -2061,12 +2130,12 @@ svg {
 }
 
 .bounty-card-top b {
-  background: #f6f7f8;
-  color: #69707c;
+  background: var(--bg-subtle);
+  color: var(--text-muted);
 }
 
 .bounty-card h2 {
-  color: #111318;
+  color: var(--text-strong);
   font-size: 19px;
   font-weight: 600;
   line-height: 1.25;
@@ -2093,7 +2162,7 @@ svg {
 
 .bounty-meta div {
   border-radius: 10px;
-  background: #f8fafc;
+  background: var(--bg-subtle);
   padding: 12px;
 }
 
@@ -2112,7 +2181,7 @@ svg {
   min-height: 38px;
   border-radius: 4px;
   background: var(--blue);
-  color: white;
+  color: var(--text-on-accent);
   padding: 0 16px;
   font-size: 12px;
   font-weight: 650;
@@ -2125,7 +2194,7 @@ svg {
   min-height: 260px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #f8fafc;
+  background: var(--bg-subtle);
   padding: 32px;
   text-align: center;
 }
@@ -2151,7 +2220,7 @@ svg {
 .bounty-card-skeleton p {
   display: block;
   border-radius: 999px;
-  background: linear-gradient(90deg, #eef2f7, #f8fafc, #eef2f7);
+  background: linear-gradient(90deg, var(--line-soft), var(--bg-subtle), var(--line-soft));
   background-size: 240% 100%;
   animation: bounty-skeleton 1.4s ease-in-out infinite;
 }
@@ -2184,6 +2253,106 @@ svg {
   100% {
     background-position: -100% 0;
   }
+}
+
+:root[data-theme="dark"] .soft-section > .container {
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(var(--grid-dot) 0.85px, transparent 0.85px) 0 0 / 12px 12px,
+    linear-gradient(135deg, transparent 0 48.8%, var(--grid-line) 49.4% 50.6%, transparent 51.2%) 0 0 / 210px 210px,
+    linear-gradient(180deg, rgba(19, 28, 41, 0.96), rgba(15, 23, 35, 0.98));
+}
+
+:root[data-theme="dark"] .feature-card {
+  background: var(--bg-surface-raised);
+  box-shadow: var(--shadow-soft);
+}
+
+:root[data-theme="dark"] .feature-card h3,
+:root[data-theme="dark"] .benefit-card h3,
+:root[data-theme="dark"] .today-cards h3,
+:root[data-theme="dark"] .bounty-card h2,
+:root[data-theme="dark"] .poster-card-head b {
+  color: var(--text-strong);
+}
+
+:root[data-theme="dark"] .feature-card p,
+:root[data-theme="dark"] .benefit-card p,
+:root[data-theme="dark"] .today-cards p,
+:root[data-theme="dark"] .bounty-card p,
+:root[data-theme="dark"] .poster-bounty-card > p,
+:root[data-theme="dark"] .poster-card-head p {
+  color: var(--text-secondary);
+}
+
+:root[data-theme="dark"] .mock-panel::after {
+  background:
+    linear-gradient(to right, rgba(19, 28, 41, 0.96) 28%, rgba(19, 28, 41, 0.55) 64%, rgba(19, 28, 41, 0.08) 100%),
+    linear-gradient(to top, rgba(19, 28, 41, 0.94) 18%, rgba(19, 28, 41, 0.16) 62%);
+}
+
+:root[data-theme="dark"] .feature-collaboration .mock-panel::after,
+:root[data-theme="dark"] .feature-hackathons .mock-panel::after {
+  background: linear-gradient(to top, rgba(19, 28, 41, 0.96) 24%, rgba(19, 28, 41, 0.5) 68%, rgba(19, 28, 41, 0.08) 100%);
+}
+
+:root[data-theme="dark"] .today-panel,
+:root[data-theme="dark"] .dashboard {
+  border-color: var(--line);
+  background: var(--bg-surface-raised);
+  box-shadow: var(--shadow-soft);
+}
+
+:root[data-theme="dark"] .today-cards article {
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+:root[data-theme="dark"] .today-cards button {
+  background: var(--bg-surface-muted);
+  color: var(--text-secondary);
+}
+
+:root[data-theme="dark"] .testimonials-section {
+  background:
+    linear-gradient(to bottom, var(--bg-surface) 0%, var(--bg-surface) 70%, var(--bg-surface-muted) 100%);
+}
+
+:root[data-theme="dark"] .testimonials-section::after {
+  background: linear-gradient(to bottom, rgba(11, 17, 26, 0), var(--bg-surface-muted));
+}
+
+:root[data-theme="dark"] .poster-bounty-card {
+  background:
+    radial-gradient(circle at 88% 14%, rgba(79, 140, 255, 0.1), transparent 34%),
+    linear-gradient(180deg, var(--bg-surface-raised), var(--bg-surface));
+}
+
+:root[data-theme="dark"] .poster-bounty-card.is-featured {
+  border-color: rgba(79, 140, 255, 0.3);
+  background:
+    radial-gradient(circle at 88% 14%, rgba(79, 140, 255, 0.14), transparent 34%),
+    linear-gradient(180deg, var(--bg-surface-raised), var(--bg-surface-muted));
+}
+
+:root[data-theme="dark"] .faq-item {
+  border-color: var(--line);
+  background: rgba(19, 28, 41, 0.88);
+  box-shadow: var(--shadow-soft);
+}
+
+:root[data-theme="dark"] .faq-item button {
+  color: var(--text-primary);
+}
+
+:root[data-theme="dark"] .faq-item button i {
+  border-color: var(--line);
+  background: var(--bg-surface-muted);
+  color: var(--text-secondary);
+}
+
+:root[data-theme="dark"] .faq-answer p {
+  color: var(--text-secondary);
 }
 
 @media (max-width: 1024px) {

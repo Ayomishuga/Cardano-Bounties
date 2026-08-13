@@ -239,7 +239,7 @@ export function PosterBountiesPage() {
 
   function renderSortIndicator(col: typeof sortCol) {
     if (sortCol !== col) return null;
-    return sortDesc ? " v" : " ^";
+    return sortDesc ? " ↓" : " ↑";
   }
 
   async function handleCopy(value: string) {

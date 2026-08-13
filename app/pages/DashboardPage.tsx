@@ -8,7 +8,8 @@ import { useAppWallet } from "@/components/wallet/WalletProvider";
 import { useToast } from "@/components/toast/ToastProvider";
 import { authFetch } from "@/lib/api";
 import styles from "./DashboardPage.module.css";
-import { MetricGridShimmer, WorkspaceQueueShimmer, HealthPanelShimmer, AdminTableShimmer } from "@/components/dashboard/ShimmerLoaders";
+import { ContentWithLinks } from "@/components/shared/ContentWithLinks";
+import { MetricGridShimmer, WorkspaceQueueShimmer, HealthPanelShimmer, AdminTableShimmer, AdminTableBodyShimmer } from "@/components/dashboard/ShimmerLoaders";
 
 type Bounty = {
   id: string;
@@ -1002,8 +1003,8 @@ function SubmissionReviewDetail({
         <p>{formatRelativeTime(submission.submitted_at || submission.created_at)}</p>
       </section>
       <section className={styles.detailSection}>
-        <span>Submission content</span>
-        <p>{submission.content || "No submission content provided."}</p>
+        <span>Contributor note</span>
+        <p><ContentWithLinks content={submission.content} linkClassName={styles.contentLink} /></p>
       </section>
       <section className={styles.noticeSection}>
         <span>Poster review note</span>

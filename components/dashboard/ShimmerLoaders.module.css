@@ -1,12 +1,10 @@
-﻿.shimmerWrapper {
-  background-color: var(--line, #e2e8f0);
+.shimmerWrapper {
+  background-color: var(--shimmer-base);
   background-image: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0) 0,
-    rgba(255, 255, 255, 0.4) 20%,
-    rgba(255, 255, 255, 0.6) 50%,
-    rgba(255, 255, 255, 0.4) 80%,
-    rgba(255, 255, 255, 0) 100%
+    transparent 0,
+    var(--shimmer-highlight) 50%,
+    transparent 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
@@ -42,9 +40,9 @@
 }
 
 .metricCard {
-  border: 1px solid var(--line, #e2e8f0);
+  border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   box-shadow: var(--shadow-soft, 0 1px 2px rgba(0, 0, 0, 0.05));
   padding: 16px 20px;
   display: flex;
@@ -78,9 +76,9 @@
 }
 
 .panel {
-  border: 1px solid var(--line, #e2e8f0);
+  border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   box-shadow: var(--shadow-soft, 0 1px 2px rgba(0, 0, 0, 0.05));
   overflow: hidden;
   display: flex;
@@ -92,7 +90,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--line, #e2e8f0);
+  border-bottom: 1px solid var(--line);
 }
 
 .headerSubtitle {
@@ -118,7 +116,7 @@
   align-items: center;
   gap: 16px;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--line, #e2e8f0);
+  border-bottom: 1px solid var(--line);
 }
 
 .itemTitle {
@@ -146,9 +144,9 @@
 }
 
 .healthPanel {
-  border: 1px solid var(--line, #e2e8f0);
+  border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 18px 20px;
   box-shadow: var(--shadow-soft, 0 1px 2px rgba(0, 0, 0, 0.05));
   display: flex;
@@ -180,8 +178,8 @@
 /* Admin Table Shimmer */
 .tableWrap {
   overflow-x: auto;
-  background: #fff;
-  border: 1px solid var(--line, #e2e8f0);
+  background: var(--bg-surface);
+  border: 1px solid var(--line);
   border-radius: 8px;
   min-height: 200px;
 }
@@ -195,11 +193,11 @@
 .table th,
 .table td {
   padding: 12px 24px;
-  border-bottom: 1px solid var(--line, #e2e8f0);
+  border-bottom: 1px solid var(--line);
 }
 
 .table th {
-  background: #f8fafc;
+  background: var(--bg-subtle);
   height: 48px;
 }
 
@@ -230,7 +228,7 @@
   gap: 18px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 18px;
   box-shadow: var(--shadow-soft);
 }
@@ -238,7 +236,7 @@
 .managementPanel {
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   box-shadow: var(--shadow-soft);
   overflow: hidden;
   display: flex;

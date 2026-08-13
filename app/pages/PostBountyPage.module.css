@@ -1,13 +1,13 @@
 .postPage {
-  background: #fff;
+  background: var(--bg-surface);
 }
 
 .postHero {
   padding: 44px 0 28px;
   background:
-    radial-gradient(#edf1f5 0.85px, transparent 0.85px) 0 0 / 12px 12px,
-    linear-gradient(135deg, transparent 0 48.8%, rgba(1, 81, 194, 0.035) 49.4% 50.6%, transparent 51.2%) 0 0 / 210px 210px,
-    #fff;
+    radial-gradient(var(--grid-dot) 0.85px, transparent 0.85px) 0 0 / 12px 12px,
+    linear-gradient(135deg, transparent 0 48.8%, var(--grid-line) 49.4% 50.6%, transparent 51.2%) 0 0 / 210px 210px,
+    var(--bg-surface);
 }
 
 .postHeroGrid {
@@ -40,7 +40,7 @@
 .guidancePanel {
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   box-shadow: var(--shadow-soft);
 }
 
@@ -60,7 +60,7 @@
 
 .briefPreview h2 {
   margin-top: 16px;
-  color: #111318;
+  color: var(--text-strong);
   font-size: 22px;
   font-weight: 650;
   line-height: 1.2;
@@ -97,7 +97,7 @@
   justify-content: space-between;
   gap: 16px;
   border-radius: 10px;
-  background: #f8fafc;
+  background: var(--bg-subtle);
   padding: 12px;
 }
 
@@ -137,7 +137,7 @@
 .formHeader h2,
 .guidancePanel h2 {
   margin-top: 8px;
-  color: #111318;
+  color: var(--text-strong);
   font-size: 22px;
   font-weight: 650;
 }
@@ -158,7 +158,7 @@
 }
 
 .fieldGroup label {
-  color: #343942;
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 750;
 }
@@ -169,7 +169,7 @@
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-surface);
   color: var(--ink);
   padding: 0 14px;
   font: inherit;
@@ -209,14 +209,14 @@
 }
 
 .fieldGroup > span {
-  color: #b91c1c;
+  color: var(--status-danger-text);
   font-size: 11px;
   font-weight: 650;
 }
 
 .fieldHint {
   min-height: 16px;
-  color: #6b7280;
+  color: var(--text-muted);
   font-size: 11px;
   font-weight: 600;
   line-height: 1.45;
@@ -238,7 +238,7 @@
   gap: 4px;
   border: 1.5px solid var(--line);
   border-radius: 10px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 12px 14px;
   cursor: pointer;
   transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
@@ -250,7 +250,7 @@
 
 .payoutRadio:hover {
   border-color: rgba(1, 81, 194, 0.35);
-  background: #f8faff;
+  background: var(--accent-soft);
 }
 
 .payoutRadioActive {
@@ -279,11 +279,11 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 16px;
-  background: #f8fafc;
+  background: var(--bg-subtle);
 }
 
 .prizeStructureSection > label {
-  color: #343942;
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 750;
   margin-bottom: 4px;
@@ -307,7 +307,7 @@
   height: 40px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-surface);
   color: var(--ink);
   padding: 0 12px;
   font: inherit;
@@ -340,15 +340,15 @@
 }
 
 .prizeTotalOk {
-  background: #f0fdf4;
+  background: var(--status-success-bg);
   border: 1px solid rgba(22, 163, 74, 0.2);
-  color: #166534;
+  color: var(--status-success-text);
 }
 
 .prizeTotalError {
-  background: #fffbeb;
+  background: var(--status-warning-bg);
   border: 1px solid rgba(245, 158, 11, 0.25);
-  color: #92400e;
+  color: var(--status-warning-text);
 }
 
 .prizeWarning {
@@ -375,7 +375,7 @@
   border-radius: 12px;
   background:
     linear-gradient(135deg, rgba(1, 81, 194, 0.07), transparent 42%),
-    #f8fafc;
+    var(--bg-subtle);
   padding: 12px;
 }
 
@@ -438,21 +438,21 @@
 .formActions button {
   border: 0;
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
   cursor: pointer;
   box-shadow: 0 14px 30px rgba(1, 81, 194, 0.22);
 }
 
 .formActions button:disabled {
-  background: #d8dee8;
+  background: var(--line);
   box-shadow: none;
   cursor: not-allowed;
 }
 
 .formActions a {
   border: 1px solid var(--line);
-  background: #fff;
-  color: #353a43;
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 
 .successMessage,
@@ -467,8 +467,8 @@
 
 .successMessage {
   border: 1px solid rgba(22, 163, 74, 0.22);
-  background: #f0fdf4;
-  color: #166534;
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
 }
 
 .successMessage strong {
@@ -477,8 +477,8 @@
 
 .errorMessage {
   border: 1px solid rgba(220, 38, 38, 0.22);
-  background: #fef2f2;
-  color: #991b1b;
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
   font-weight: 650;
 }
 
@@ -498,7 +498,7 @@
 .guidancePanel li {
   position: relative;
   padding-left: 22px;
-  color: #4b5563;
+  color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.55;
 }
@@ -516,12 +516,12 @@
 
 .guidancePanel div {
   border-radius: 12px;
-  background: #f8fafc;
+  background: var(--bg-subtle);
   padding: 14px;
 }
 
 .guidancePanel strong {
-  color: #111318;
+  color: var(--text-strong);
   font-size: 13px;
 }
 
@@ -589,7 +589,7 @@
 }
 
 .modalContent {
-  background: #fff;
+  background: var(--bg-surface);
   border: 1px solid var(--line);
   border-radius: 16px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
@@ -620,7 +620,7 @@
 }
 
 .modalBreakdown {
-  background: #f8fafc;
+  background: var(--bg-subtle);
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 16px;
@@ -667,8 +667,8 @@
 
 .modalWarning {
   font-size: 12px !important;
-  color: #b45309 !important;
-  background: #fffbeb;
+  color: var(--status-warning-text) !important;
+  background: var(--status-warning-bg);
   border: 1px solid #fef3c7;
   border-radius: 8px;
   padding: 10px 12px;
@@ -685,8 +685,8 @@
   min-height: 38px;
   padding: 0 16px;
   border: 1px solid var(--line);
-  background: #fff;
-  color: #353a43;
+  background: var(--bg-surface);
+  color: var(--text-primary);
   font-weight: 650;
   border-radius: 6px;
   cursor: pointer;
@@ -694,7 +694,7 @@
 }
 
 .modalCancelButton:hover {
-  background: #f8fafc;
+  background: var(--bg-subtle);
 }
 
 .modalConfirmButton {
@@ -702,7 +702,7 @@
   padding: 0 20px;
   border: none;
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
   font-weight: 700;
   border-radius: 6px;
   cursor: pointer;
@@ -711,7 +711,7 @@
 }
 
 .modalConfirmButton:hover {
-  background: #0246a8;
+  background: var(--blue-dark);
   transform: translateY(-1px);
 }
 

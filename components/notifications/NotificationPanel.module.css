@@ -15,8 +15,8 @@
   right: 0;
   bottom: 0;
   width: min(420px, 100vw);
-  background: #ffffff;
-  border-left: 1px solid var(--line, #e2e8f0);
+  background: var(--bg-surface);
+  border-left: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   z-index: 999;
@@ -41,8 +41,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 20px 16px;
-  border-bottom: 1px solid var(--line, #e2e8f0);
-  background: #ffffff;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-surface);
   flex-shrink: 0;
 }
 
@@ -56,13 +56,13 @@
   font-family: var(--font-outfit), "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 17px;
   font-weight: 700;
-  color: #111318;
+  color: var(--text-strong);
   margin: 0;
 }
 
 .unreadBadge {
   background: var(--blue, #0151c2);
-  color: #fff;
+  color: var(--text-on-accent);
   font-size: 10px;
   font-weight: 800;
   line-height: 1;
@@ -100,7 +100,7 @@
   width: 32px;
   height: 32px;
   background: none;
-  border: 1px solid var(--line, #e2e8f0);
+  border: 1px solid var(--line);
   border-radius: 8px;
   cursor: pointer;
   color: var(--muted, #64748b);
@@ -117,7 +117,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  background: #ffffff;
+  background: var(--bg-surface);
 }
 
 /* ── Notification list ─────────────────────────────────────── */
@@ -135,7 +135,7 @@
   padding: 14px 18px;
   background: none;
   border: none;
-  border-bottom: 1px solid var(--line-soft, #f1f3f6);
+  border-bottom: 1px solid var(--line-soft);
   cursor: pointer;
   text-align: left;
   transition: background 0.12s;
@@ -169,7 +169,7 @@
 .notifTitle {
   font-size: 13px;
   font-weight: 750;
-  color: #20242b;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -234,7 +234,7 @@
   font-family: var(--font-outfit), "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 18px;
   font-weight: 750;
-  color: #111318;
+  color: var(--text-strong);
   margin: 0;
   line-height: 1.25;
 }
@@ -246,12 +246,12 @@
 }
 
 .detailMessage {
-  border: 1px solid var(--line-soft, #f1f3f6);
+  border: 1px solid var(--line-soft);
   border-radius: 12px;
   background: var(--section, #f7f9fb);
   padding: 16px;
   font-size: 13px;
-  color: #4b5563;
+  color: var(--text-secondary);
   line-height: 1.75;
   margin: 0;
 }
@@ -297,7 +297,7 @@
   .panel {
     width: 100vw;
     border-left: none;
-    border-top: 1px solid var(--line, #e2e8f0);
+    border-top: 1px solid var(--line);
     top: auto;
     bottom: 0;
     height: 88svh;

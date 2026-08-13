@@ -16,7 +16,7 @@
   align-items: start;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--bg-elevated);
   box-shadow: 0 18px 44px rgba(12, 24, 44, 0.16);
   padding: 14px;
   color: var(--ink);
@@ -34,7 +34,7 @@
 
 .toast strong {
   display: block;
-  color: #111318;
+  color: var(--text-strong);
   font-size: 13px;
   font-weight: 800;
   line-height: 1.35;
@@ -42,7 +42,7 @@
 
 .toast p {
   margin-top: 3px;
-  color: #4b5563;
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 600;
   line-height: 1.55;
@@ -54,7 +54,7 @@
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
-  color: #6b7280;
+  color: var(--text-muted);
   cursor: pointer;
   font-size: 16px;
   line-height: 1;
@@ -62,8 +62,8 @@
 
 .toast button:hover {
   border-color: var(--line);
-  background: #f8fafc;
-  color: #111318;
+  background: var(--bg-subtle);
+  color: var(--text-strong);
 }
 
 .success {

@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { WalletProvider } from "@/components/wallet/WalletProvider";
 import { ToastProvider } from "@/components/toast/ToastProvider";
 
@@ -12,9 +13,11 @@ const MeshProvider = dynamic(
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <MeshProvider>
-      <WalletProvider>
-        <ToastProvider>{children}</ToastProvider>
-      </WalletProvider>
+      <ThemeProvider>
+        <WalletProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </WalletProvider>
+      </ThemeProvider>
     </MeshProvider>
   );
 }

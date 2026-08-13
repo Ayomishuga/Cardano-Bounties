@@ -12,6 +12,40 @@ async function getContributorProfile(contributorId: string) {
   return data || null;
 }
 
+function validateSubmissionContent(content: string): { ok: boolean; error?: string } {
+  const trimmed = content.trim()
+
+  if (!trimmed) {
+    return { ok: false, error: 'content is required' }
+  }
+
+  const urlRegex = /^https?:\/\/.+\..+/
+  const isUrl = urlRegex.test(trimmed)
+
+  if (isUrl) {
+    try {
+      const url = new URL(trimmed)
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        return { ok: false, error: 'Submission URL must use http or https' }
+      }
+      if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+        return { ok: false, error: 'Submission URL cannot be a localhost address' }
+      }
+    } catch {
+      return { ok: false, error: 'Submission URL is not valid' }
+    }
+  } else {
+    if (trimmed.length < 50) {
+      return { ok: false, error: 'Text submissions must be at least 50 characters' }
+    }
+    if (trimmed.length > 5000 ) {
+      return { ok: false, error: 'Text submissions cannot exceed 5000 characters' }
+    }
+  }
+
+    return { ok: true }
+  }
+
 // POST
 export async function POST(req: NextRequest) {
   const contributorId =
@@ -29,6 +63,14 @@ export async function POST(req: NextRequest) {
       { error: "bounty_id and content are required" },
       { status: 400 },
     );
+  }
+
+  const validation = validateSubmissionContent(content)
+  if (!validation.ok) {
+    return NextResponse.json(
+      { error: validation.error },
+      { status: 400 }
+    )
   }
 
   const { data: bounty, error: bountyError } = await supabaseAdmin
@@ -53,6 +95,13 @@ export async function POST(req: NextRequest) {
       { error: "Bounty is no longer open" },
       { status: 400 },
     );
+  }
+
+  if (bounty.created_by === contributorId) {
+    return NextResponse.json(
+      { error: 'You cannot submit to your own bounty' },
+      { status: 400 }
+    )
   }
 
   const { data, error } = await supabaseAdmin

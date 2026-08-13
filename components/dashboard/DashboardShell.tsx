@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { WalletConnect } from "@/components/wallet/WalletConnect";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useAppWallet } from "@/components/wallet/WalletProvider";
 import { authFetch } from "@/lib/api";
 import styles from "@/app/pages/DashboardPage.module.css";
@@ -307,6 +308,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
           <div className={styles.topnavRight}>
             <NotificationBell />
+            <ThemeToggle />
             <Link href={meta.href} className={styles.topnavAction}>
               {meta.action}
             </Link>

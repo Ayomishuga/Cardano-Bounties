@@ -9,7 +9,7 @@
   border: 0;
   border-radius: 4px;
   background: var(--blue);
-  color: white;
+  color: var(--text-on-accent);
   padding: 0 15px;
   display: inline-flex;
   align-items: center;
@@ -44,7 +44,7 @@
   width: 292px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 12px;
   box-shadow: 0 20px 42px rgba(18, 22, 28, 0.16);
 }
@@ -64,7 +64,7 @@
 
 .walletMenuHeader p {
   margin-top: 5px;
-  color: #69707c;
+  color: var(--text-muted);
   font-size: 12px;
 }
 
@@ -81,8 +81,8 @@
   align-items: center;
   border: 1px solid var(--line-soft);
   border-radius: 10px;
-  background: #fbfcfe;
-  color: #20242b;
+  background: var(--bg-surface-muted);
+  color: var(--text-primary);
   padding: 8px 10px;
   text-align: left;
   cursor: pointer;
@@ -103,7 +103,7 @@
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background-color: #fff;
+  background-color: var(--bg-surface);
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
@@ -112,7 +112,7 @@
 
 .walletList span {
   overflow: hidden;
-  color: #20242b;
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 700;
   text-overflow: ellipsis;
@@ -129,12 +129,12 @@
   display: grid;
   gap: 5px;
   border-radius: 10px;
-  background: #f8fafc;
+  background: var(--bg-subtle);
   padding: 12px;
 }
 
 .walletStatus strong {
-  color: #20242b;
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 750;
 }
@@ -145,8 +145,8 @@
   margin-top: 10px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: #fff;
-  color: #353a43;
+  background: var(--bg-surface);
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -161,14 +161,14 @@
 }
 
 .emptyState {
-  background: #f8fafc;
+  background: var(--bg-subtle);
   color: var(--muted);
 }
 
 .errorState {
   margin-top: 10px;
-  background: #fef2f2;
-  color: #991b1b;
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
   font-weight: 650;
 }
 
@@ -188,24 +188,24 @@
   justify-content: center;
   border: 1px solid rgba(1, 81, 194, 0.22);
   border-radius: 4px;
-  background: white;
-  color: #69707c;
+  background: var(--bg-surface);
+  color: var(--text-muted);
   font-size: 14px;
   cursor: pointer;
   transition: all 160ms ease;
 }
 
 .reAuthDisconnect:hover {
-  background: #fef2f2;
-  color: #991b1b;
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
   border-color: rgba(153, 27, 27, 0.2);
 }
 
 .reAuthError {
   margin-top: 7px;
   border-radius: 6px;
-  background: #fef2f2;
-  color: #991b1b;
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
   padding: 8px 10px;
   font-size: 11px;
   font-weight: 600;
@@ -218,7 +218,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-elevated);
   flex-shrink: 0;
   animation: signingPulse 1.1s ease-in-out infinite;
 }

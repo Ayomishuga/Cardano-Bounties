@@ -171,3 +171,24 @@ export function isOlderThanHours(value: string | null | undefined, hours: number
   if (Number.isNaN(date.getTime())) return false;
   return Date.now() - date.getTime() > hours * 60 * 60 * 1000;
 }
+
+// ---------------------------------------------------------------------------
+// URL validation
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true when the value is a well-formed URL using http:// or https://.
+ * Uses the native URL constructor — no custom regex needed.
+ *
+ * @example isValidUrl("https://github.com/example") → true
+ * @example isValidUrl("ftp://bad.com") → false
+ * @example isValidUrl("not a url") → false
+ */
+export function isValidUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}

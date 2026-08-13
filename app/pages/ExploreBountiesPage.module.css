@@ -1,13 +1,13 @@
 .explorePage {
-  background: #fff;
+  background: var(--bg-surface);
 }
 
 .pageContainer {
   min-height: 100vh;
   background:
-    radial-gradient(#edf1f5 0.85px, transparent 0.85px) 0 68px / 12px 12px,
-    linear-gradient(135deg, transparent 0 48.8%, rgba(1, 81, 194, 0.035) 49.4% 50.6%, transparent 51.2%) 0 68px / 210px 210px,
-    #fff;
+    radial-gradient(var(--grid-dot) 0.85px, transparent 0.85px) 0 68px / 12px 12px,
+    linear-gradient(135deg, transparent 0 48.8%, var(--grid-line) 49.4% 50.6%, transparent 51.2%) 0 68px / 210px 210px,
+    var(--bg-surface);
 }
 
 .mainContent {
@@ -43,7 +43,7 @@
   align-items: center;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 16px;
   margin-bottom: 24px;
   box-shadow: var(--shadow-soft);
@@ -58,7 +58,7 @@
   height: 44px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-surface);
   color: var(--ink);
   padding: 0 14px;
   font: inherit;
@@ -83,8 +83,8 @@
   min-height: 36px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: #fff;
-  color: #5f6570;
+  background: var(--bg-surface);
+  color: var(--text-muted);
   padding: 0 13px;
   font: inherit;
   font-size: 12px;
@@ -97,7 +97,7 @@
 .chipActive {
   border-color: transparent;
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .errorBanner {
@@ -108,8 +108,8 @@
   margin-bottom: 20px;
   border: 1px solid rgba(220, 38, 38, 0.22);
   border-radius: 10px;
-  background: #fef2f2;
-  color: #991b1b;
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
   padding: 13px 14px;
   font-size: 12px;
   font-weight: 650;
@@ -119,8 +119,8 @@
   min-height: 32px;
   border: 1px solid rgba(220, 38, 38, 0.24);
   border-radius: 6px;
-  background: #fff;
-  color: #991b1b;
+  background: var(--bg-surface);
+  color: var(--status-danger-text);
   padding: 0 12px;
   font: inherit;
   font-size: 12px;
@@ -131,9 +131,9 @@
 .exploreHero {
   padding: 44px 0 28px;
   background:
-    radial-gradient(#edf1f5 0.85px, transparent 0.85px) 0 0 / 12px 12px,
-    linear-gradient(135deg, transparent 0 48.8%, rgba(1, 81, 194, 0.035) 49.4% 50.6%, transparent 51.2%) 0 0 / 210px 210px,
-    #fff;
+    radial-gradient(var(--grid-dot) 0.85px, transparent 0.85px) 0 0 / 12px 12px,
+    linear-gradient(135deg, transparent 0 48.8%, var(--grid-line) 49.4% 50.6%, transparent 51.2%) 0 0 / 210px 210px,
+    var(--bg-surface);
 }
 
 .exploreHeroGrid {
@@ -166,7 +166,7 @@
   gap: 12px;
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-elevated);
   padding: 16px;
   box-shadow: var(--shadow-card);
 }
@@ -177,7 +177,7 @@
   justify-content: space-between;
   gap: 16px;
   border-radius: 12px;
-  background: #f8fafc;
+  background: var(--bg-subtle);
   padding: 15px 16px;
 }
 
@@ -210,7 +210,7 @@
   align-items: start;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 16px;
   margin-bottom: 24px;
   box-shadow: var(--shadow-soft);
@@ -242,7 +242,7 @@
   height: 44px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-surface);
   color: var(--ink);
   padding: 0 14px 0 40px;
   font: inherit;
@@ -256,7 +256,7 @@
   height: 44px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-surface);
   color: var(--ink);
   padding: 0 14px;
   font: inherit;
@@ -270,7 +270,7 @@
   background:
     linear-gradient(45deg, transparent 50%, #64748b 50%) calc(100% - 18px) 52% / 6px 6px no-repeat,
     linear-gradient(135deg, #64748b 50%, transparent 50%) calc(100% - 12px) 52% / 6px 6px no-repeat,
-    #fff;
+    var(--bg-surface);
   cursor: pointer;
 }
 
@@ -291,8 +291,8 @@
   min-height: 44px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f8fafc;
-  color: #4b5563;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
   padding: 0 13px;
   font-size: 12px;
   font-weight: 700;
@@ -316,8 +316,8 @@
   min-height: 36px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: #fff;
-  color: #5f6570;
+  background: var(--bg-surface);
+  color: var(--text-muted);
   padding: 0 13px;
   font-size: 12px;
   font-weight: 600;
@@ -329,7 +329,7 @@
 .typeFilters button.isActive {
   border-color: transparent;
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .toolbarSummary {
@@ -358,7 +358,7 @@
   scroll-margin-top: 92px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-surface);
   padding: 20px;
   box-shadow: var(--shadow-soft);
 }
@@ -399,7 +399,7 @@
 .projectName {
   min-width: 0;
   overflow: hidden;
-  color: #343942;
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 750;
   text-overflow: ellipsis;
@@ -408,7 +408,7 @@
 
 .cardTitle {
   margin: 0;
-  color: #111318;
+  color: var(--text-strong);
   font-size: 19px;
   font-weight: 650;
   line-height: 1.25;
@@ -448,7 +448,7 @@
 .rewardBlock,
 .metaBlock {
   border-radius: 10px;
-  background: #f8fafc;
+  background: var(--bg-subtle);
   padding: 12px;
 }
 
@@ -476,11 +476,11 @@
 
 .bountyCardInReview {
   border-color: rgba(180, 83, 9, 0.28);
-  background: linear-gradient(180deg, #fff 0%, #fffbeb 100%);
+  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--status-warning-bg) 100%);
 }
 
 .bountyCardInReview .bountyAction {
-  background: #92400e;
+  background: var(--status-warning-text);
   box-shadow: 0 14px 30px rgba(146, 64, 14, 0.18);
 }
 
@@ -488,8 +488,8 @@
   margin-top: 14px;
   border: 1px solid rgba(180, 83, 9, 0.18);
   border-radius: 8px;
-  background: #fffbeb;
-  color: #92400e;
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
   padding: 10px 12px;
   font-size: 12px;
   font-weight: 650;
@@ -512,7 +512,7 @@
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background-color: #f8fafc;
+  background-color: var(--bg-subtle);
   background-image: linear-gradient(135deg, rgba(1, 81, 194, 0.12), rgba(17, 19, 24, 0.04));
 }
 
@@ -526,7 +526,7 @@
 .projectIdentity strong {
   min-width: 0;
   overflow: hidden;
-  color: #343942;
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 750;
   text-overflow: ellipsis;
@@ -558,12 +558,12 @@
 }
 
 .bountyCardTop b {
-  background: #f6f7f8;
-  color: #69707c;
+  background: var(--bg-subtle);
+  color: var(--text-muted);
 }
 
 .bountyCard h2 {
-  color: #111318;
+  color: var(--text-strong);
   font-size: 19px;
   font-weight: 600;
   line-height: 1.25;
@@ -594,7 +594,7 @@
 
 .bountyMeta div {
   border-radius: 10px;
-  background: #f8fafc;
+  background: var(--bg-subtle);
   padding: 12px;
 }
 
@@ -615,7 +615,7 @@
   min-height: 38px;
   border-radius: 4px;
   background: var(--blue);
-  color: white;
+  color: var(--text-on-accent);
   padding: 0 16px;
   font-size: 12px;
   font-weight: 650;
@@ -628,7 +628,7 @@
   min-height: 260px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #f8fafc;
+  background: var(--bg-subtle);
   padding: 32px;
   text-align: center;
 }
@@ -653,8 +653,8 @@
   justify-content: center;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: #fff;
-  color: #353a43;
+  background: var(--bg-surface);
+  color: var(--text-primary);
   padding: 0 14px;
   font-size: 12px;
   font-weight: 700;
@@ -665,7 +665,7 @@
   margin-top: 16px;
   border-color: rgba(1, 81, 194, 0.24);
   background: var(--blue);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .pagination {
@@ -708,8 +708,8 @@
   justify-content: center;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: #fff;
-  color: #353a43;
+  background: var(--bg-surface);
+  color: var(--text-primary);
   padding: 0 14px;
   font: inherit;
   font-size: 12px;
@@ -731,7 +731,7 @@
 .bountyCardSkeleton p {
   display: block;
   border-radius: 999px;
-  background: linear-gradient(90deg, #eef2f7, #f8fafc, #eef2f7);
+  background: linear-gradient(90deg, var(--line-soft), var(--bg-subtle), var(--line-soft));
   background-size: 240% 100%;
   animation: bountySkeleton 1.4s ease-in-out infinite;
 }
