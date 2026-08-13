@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BOUNTY_STATUS, SUBMISSION_STATUS } from "@/lib/bountyContract";
 import { supabaseAdmin } from "@/lib/supabase";
+import { createNotification } from "@/lib/notifications";
 
 const REFUNDABLE_STATUSES = [
   BOUNTY_STATUS.AwaitingAdminReview,
@@ -18,11 +19,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const body = await req.json();
-  const bountyId = typeof body.bounty_id === "string" ? body.bounty_id.trim() : "";
-  const refundTxHash = typeof body.transaction_hash === "string" ? body.transaction_hash.trim() : "";
+  const bountyId =
+    typeof body.bounty_id === "string" ? body.bounty_id.trim() : "";
+  const refundTxHash =
+    typeof body.transaction_hash === "string"
+      ? body.transaction_hash.trim()
+      : "";
 
   if (!bountyId) {
-    return NextResponse.json({ error: "bounty_id is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "bounty_id is required" },
+      { status: 400 },
+    );
   }
 
   if (!/^[0-9a-f]{64}$/i.test(refundTxHash)) {
@@ -34,7 +42,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const { data: bounty, error: fetchError } = await supabaseAdmin
     .from("bounties")
-    .select("id, status, refund_tx_hash")
+    .select("id, status, title, created_by, refund_tx_hash")
     .eq("id", bountyId)
     .single();
 
@@ -43,7 +51,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   if (bounty.refund_tx_hash) {
-    return NextResponse.json({ error: "Bounty has already been refunded" }, { status: 409 });
+    return NextResponse.json(
+      { error: "Bounty has already been refunded" },
+      { status: 409 },
+    );
   }
 
   if (!REFUNDABLE_STATUSES.includes(bounty.status)) {
@@ -52,6 +63,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { status: 400 },
     );
   }
+
+  const { data: pendingSubmissions } = await supabaseAdmin
+    .from("submissions")
+    .select("id, contributor_id")
+    .eq("bounty_id", bountyId)
+    .eq("status", SUBMISSION_STATUS.Pending);
 
   const now = new Date().toISOString();
   const { data, error } = await supabaseAdmin
@@ -75,6 +92,28 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     .update({ status: SUBMISSION_STATUS.Closed, updated_at: now })
     .eq("bounty_id", bountyId)
     .eq("status", SUBMISSION_STATUS.Pending);
+
+  await createNotification({
+    userId: bounty.created_by,
+    type: "bounty_rejected",
+    title: "Escrow Refunded",
+    message: `Your escrow for "${bounty.title}" has been refunded.`,
+    relatedId: bountyId,
+  });
+
+  if (pendingSubmissions && pendingSubmissions.length > 0) {
+    await Promise.all(
+      pendingSubmissions.map((Submission) =>
+        createNotification({
+          userId: Submission.contributor_id,
+          type: "submission_rejected",
+          title: "Bounty Cancelled",
+          message: `The bounty "${bounty.title}" has been cancelled. Your submission has been closed.`,
+          relatedId: bountyId,
+        }),
+      ),
+    );
+  }
 
   return NextResponse.json(data);
 }
