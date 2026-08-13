@@ -2255,6 +2255,106 @@ svg {
   }
 }
 
+:root[data-theme="dark"] .soft-section > .container {
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(var(--grid-dot) 0.85px, transparent 0.85px) 0 0 / 12px 12px,
+    linear-gradient(135deg, transparent 0 48.8%, var(--grid-line) 49.4% 50.6%, transparent 51.2%) 0 0 / 210px 210px,
+    linear-gradient(180deg, rgba(19, 28, 41, 0.96), rgba(15, 23, 35, 0.98));
+}
+
+:root[data-theme="dark"] .feature-card {
+  background: var(--bg-surface-raised);
+  box-shadow: var(--shadow-soft);
+}
+
+:root[data-theme="dark"] .feature-card h3,
+:root[data-theme="dark"] .benefit-card h3,
+:root[data-theme="dark"] .today-cards h3,
+:root[data-theme="dark"] .bounty-card h2,
+:root[data-theme="dark"] .poster-card-head b {
+  color: var(--text-strong);
+}
+
+:root[data-theme="dark"] .feature-card p,
+:root[data-theme="dark"] .benefit-card p,
+:root[data-theme="dark"] .today-cards p,
+:root[data-theme="dark"] .bounty-card p,
+:root[data-theme="dark"] .poster-bounty-card > p,
+:root[data-theme="dark"] .poster-card-head p {
+  color: var(--text-secondary);
+}
+
+:root[data-theme="dark"] .mock-panel::after {
+  background:
+    linear-gradient(to right, rgba(19, 28, 41, 0.96) 28%, rgba(19, 28, 41, 0.55) 64%, rgba(19, 28, 41, 0.08) 100%),
+    linear-gradient(to top, rgba(19, 28, 41, 0.94) 18%, rgba(19, 28, 41, 0.16) 62%);
+}
+
+:root[data-theme="dark"] .feature-collaboration .mock-panel::after,
+:root[data-theme="dark"] .feature-hackathons .mock-panel::after {
+  background: linear-gradient(to top, rgba(19, 28, 41, 0.96) 24%, rgba(19, 28, 41, 0.5) 68%, rgba(19, 28, 41, 0.08) 100%);
+}
+
+:root[data-theme="dark"] .today-panel,
+:root[data-theme="dark"] .dashboard {
+  border-color: var(--line);
+  background: var(--bg-surface-raised);
+  box-shadow: var(--shadow-soft);
+}
+
+:root[data-theme="dark"] .today-cards article {
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+:root[data-theme="dark"] .today-cards button {
+  background: var(--bg-surface-muted);
+  color: var(--text-secondary);
+}
+
+:root[data-theme="dark"] .testimonials-section {
+  background:
+    linear-gradient(to bottom, var(--bg-surface) 0%, var(--bg-surface) 70%, var(--bg-surface-muted) 100%);
+}
+
+:root[data-theme="dark"] .testimonials-section::after {
+  background: linear-gradient(to bottom, rgba(11, 17, 26, 0), var(--bg-surface-muted));
+}
+
+:root[data-theme="dark"] .poster-bounty-card {
+  background:
+    radial-gradient(circle at 88% 14%, rgba(79, 140, 255, 0.1), transparent 34%),
+    linear-gradient(180deg, var(--bg-surface-raised), var(--bg-surface));
+}
+
+:root[data-theme="dark"] .poster-bounty-card.is-featured {
+  border-color: rgba(79, 140, 255, 0.3);
+  background:
+    radial-gradient(circle at 88% 14%, rgba(79, 140, 255, 0.14), transparent 34%),
+    linear-gradient(180deg, var(--bg-surface-raised), var(--bg-surface-muted));
+}
+
+:root[data-theme="dark"] .faq-item {
+  border-color: var(--line);
+  background: rgba(19, 28, 41, 0.88);
+  box-shadow: var(--shadow-soft);
+}
+
+:root[data-theme="dark"] .faq-item button {
+  color: var(--text-primary);
+}
+
+:root[data-theme="dark"] .faq-item button i {
+  border-color: var(--line);
+  background: var(--bg-surface-muted);
+  color: var(--text-secondary);
+}
+
+:root[data-theme="dark"] .faq-answer p {
+  color: var(--text-secondary);
+}
+
 @media (max-width: 1024px) {
   :root {
     --container: min(960px, calc(100% - 56px));

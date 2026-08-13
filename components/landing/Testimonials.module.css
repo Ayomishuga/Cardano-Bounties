@@ -131,6 +131,28 @@
   box-shadow: 0 14px 30px rgba(1, 81, 194, 0.22);
 }
 
+:global(:root[data-theme="dark"]) .posterBountyCard {
+  background:
+    radial-gradient(circle at 88% 14%, rgba(79, 140, 255, 0.1), transparent 34%),
+    linear-gradient(180deg, var(--bg-surface-raised), var(--bg-surface));
+}
+
+:global(:root[data-theme="dark"]) .posterBountyCard.isFeatured {
+  border-color: rgba(79, 140, 255, 0.3);
+  background:
+    radial-gradient(circle at 88% 14%, rgba(79, 140, 255, 0.14), transparent 34%),
+    linear-gradient(180deg, var(--bg-surface-raised), var(--bg-surface-muted));
+}
+
+:global(:root[data-theme="dark"]) .posterCardHead b {
+  color: var(--text-strong);
+}
+
+:global(:root[data-theme="dark"]) .posterCardHead p,
+:global(:root[data-theme="dark"]) .posterBountyCard > p {
+  color: var(--text-secondary);
+}
+
 @media (max-width: 1024px) {
   .posterBountyGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
