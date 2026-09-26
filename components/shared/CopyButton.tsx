@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { copyToClipboard } from "@/lib/clipboard";
 import styles from "./CopyButton.module.css";
 
 type CopyButtonProps = {
@@ -14,15 +15,25 @@ type CopyButtonProps = {
  */
 export function CopyButton({ value, label = "Copy", className = "" }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
 
   async function handleCopy(e: React.MouseEvent) {
     e.stopPropagation();
-    try {
-      await navigator.clipboard.writeText(value);
+    const success = await copyToClipboard(value);
+    if (success) {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      timerRef.current = setTimeout(() => setCopied(false), 2000);
     }
   }
 

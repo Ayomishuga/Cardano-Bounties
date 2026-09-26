@@ -147,20 +147,7 @@ export function getInitials(name: string | null | undefined): string {
 // Deadline helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Returns a deadline urgency label ("Open", "3d left", "Due today", "Reviewing").
- */
-export function getDeadlineState(value: string | null): string {
-  if (!value) return "Open";
-  const deadline = new Date(value);
-  if (Number.isNaN(deadline.getTime())) return "Open";
 
-  const days = Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  if (days < 0) return "Reviewing";
-  if (days === 0) return "Due today";
-  if (days <= 7) return `${days}d left`;
-  return "Open";
-}
 
 /**
  * Returns true when a given timestamp is older than the supplied number of hours.

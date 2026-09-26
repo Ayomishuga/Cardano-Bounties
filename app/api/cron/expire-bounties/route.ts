@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { BOUNTY_STATUS } from "@/lib/bountyContract";
 import { supabaseAdmin } from "@/lib/supabase";
 import { createNotification } from "@/lib/notifications";
+import { determinePastDeadlineDisposition } from "@/features/bounties/domain/bountyLifecycle";
 
 /**
  * POST /api/cron/expire-bounties
@@ -12,8 +13,8 @@ import { createNotification } from "@/lib/notifications";
  * Two passes per run:
  *  1. Warning pass  — bounties expiring in exactly 7 days → notify poster
  *  2. Expiry pass   — open bounties past their deadline:
- *       • Has ≥1 approved submission  → status: in_review + notify poster
- *       • No approved submissions     → status: expired  + notify poster
+ *       • Has ≥1 pending or approved submission → status: in_review + notify poster
+ *       • No submissions (or only rejected)     → status: expired  + notify poster
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
   // ----- Auth guard -----
@@ -97,14 +98,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ warned, movedToReview, expired });
   }
 
-  // Partition bounties: those with ≥1 approved submission vs those without
+  // Partition bounties: those with ≥1 pending or approved submission vs those without
   const toReviewIds: string[] = [];
   const toExpireIds: string[] = [];
 
   for (const bounty of pastDeadlineBounties) {
     const submissions = (bounty.submissions ?? []) as Array<{ status: string }>;
-    const hasApproved = submissions.some((s) => s.status === "approved");
-    if (hasApproved) {
+    const disposition = determinePastDeadlineDisposition(submissions);
+    if (disposition === 'in_review') {
       toReviewIds.push(bounty.id);
     } else {
       toExpireIds.push(bounty.id);
@@ -113,7 +114,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const now = new Date().toISOString();
 
-  // Batch-update bounties with approved submissions → in_review
+  // Batch-update bounties with active submissions → in_review
   if (toReviewIds.length > 0) {
     const { error: reviewErr } = await supabaseAdmin
       .from("bounties")
@@ -133,7 +134,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             userId: bounty.created_by,
             type: "bounty_auto_reviewed",
             title: "Bounty Moved to Review 📋",
-            message: `Your bounty "${bounty.title}" has passed its deadline and has been moved to review because approved submissions were received.`,
+            message: `Your bounty "${bounty.title}" has passed its deadline and has been moved to review because submissions were received.`,
             relatedId: bounty.id,
           }),
         ),

@@ -5,115 +5,24 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/toast/ToastProvider";
 import { authFetch } from "@/lib/api";
 import styles from "./AdminQueue.module.css";
-import { AdminTableBodyShimmer } from "@/components/dashboard/ShimmerLoaders";
-
-type Submission = {
-  id: string;
-  bounty_id?: string | null;
-  contributor_id?: string | null;
-  content?: string | null;
-  status: string;
-  feedback?: string | null;
-  poster_review_status?: string | null;
-  poster_feedback?: string | null;
-  submitted_at?: string | null;
-  reviewed_at?: string | null;
-  paid_at?: string | null;
-  transaction_hash?: string | null;
-};
-
-type Bounty = {
-  id: string;
-  title: string;
-  status: string;
-  type?: string | null;
-  custom_type?: string | null;
-  description?: string | null;
-  bounty_instructions?: string | null;
-  deadline?: string | null;
-  deadline_extended_count?: number | null;
-  project_name?: string | null;
-  project_logo_url?: string | null;
-  reward_amount?: number | string | null;
-  platform_fee_amount?: number | string | null;
-  total_funding_amount?: number | string | null;
-  payout_type?: string | null;
-  max_winners?: number | null;
-  escrow_tx_hash?: string | null;
-  escrow_address?: string | null;
-  escrow_submitted_at?: string | null;
-  escrow_confirmed_at?: string | null;
-  escrow_last_checked_at?: string | null;
-  escrow_verification_attempts?: number | null;
-  escrow_verification_error?: string | null;
-  created_at?: string | null;
-  submissions?: Submission[];
-};
-
-type PosterDashboardResponse = {
-  metrics?: Record<string, number>;
-  queues?: {
-    bounties?: Bounty[];
-  };
-  error?: string;
-};
-
-function formatAda(value: number | string | null | undefined) {
-  const amount = Number(value || 0);
-  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 6 }).format(amount)} ADA`;
-}
-
-function normalizeStatus(value: string | null | undefined) {
-  if (!value) return "Unknown";
-  return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function shortId(value: string | null | undefined) {
-  if (!value) return "Unknown";
-  if (value.length <= 16) return value;
-  return `${value.slice(0, 10)}...${value.slice(-6)}`;
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "Not set";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not set";
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "Not recorded";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not recorded";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
-function formatRelativeTime(value: string | null | undefined) {
-  if (!value) return "Not recorded";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not recorded";
-  const seconds = Math.max(1, Math.floor((Date.now() - date.getTime()) / 1000));
-  if (seconds < 60) return "Just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
-
-function getBountyTypeLabel(bounty: Bounty) {
-  return normalizeStatus(bounty.custom_type || bounty.type || "General");
-}
-
-function getStatusKey(status: string) {
-  return status.toLowerCase() === "open" ? "approved" : status.toLowerCase();
-}
+import type { Bounty, Submission, PosterDashboardResponse } from "@/types/bounty";
+import {
+  formatAda,
+  normalizeStatus,
+  shortId,
+  formatDate,
+  formatDateTime,
+  formatRelativeTime,
+} from "@/lib/formatters";
+import { getBountyCategoryLabel } from "@/lib/bountyHelpers";
+import { CopyIconButton } from "@/components/shared/CopyIconButton";
+import { StatusPill } from "@/components/shared/StatusPill";
+import { InitialsAvatar } from "@/components/shared/InitialsAvatar";
+import { ModalCloseButton } from "@/components/shared/ModalCloseButton";
+import { ModalNavControls } from "@/components/shared/ModalNavControls";
+import { useItemNavigation } from "@/hooks/useItemNavigation";
+import { DataTable, type ColumnDef } from "@/components/shared/DataTable";
+import { TableActionChevron } from "@/components/shared/TableActionChevron";
 
 function canRetryEscrow(bounty: Bounty) {
   return bounty.status === "pending_escrow" && Boolean(bounty.escrow_tx_hash);
@@ -139,7 +48,6 @@ export function PosterBountiesPage() {
   const [sortCol, setSortCol] = useState<"title" | "status" | "reward" | "submissions" | "posted">("posted");
   const [sortDesc, setSortDesc] = useState(true);
   const [selectedBountyId, setSelectedBountyId] = useState<string | null>(null);
-  const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
   const [verifyingBountyId, setVerifyingBountyId] = useState<string | null>(null);
   const [extendingBountyId, setExtendingBountyId] = useState<string | null>(null);
 
@@ -214,10 +122,11 @@ export function PosterBountiesPage() {
     return list;
   }, [bounties, filter, search, sortCol, sortDesc]);
 
-  const selectedItem = useMemo(() => items.find((bounty) => bounty.id === selectedBountyId) || null, [items, selectedBountyId]);
-  const selectedIndex = items.findIndex((bounty) => bounty.id === selectedBountyId);
-  const canGoPrev = selectedIndex > 0;
-  const canGoNext = selectedIndex !== -1 && selectedIndex < items.length - 1;
+  const { selectedItem, canGoPrev, canGoNext, goToPrev, goToNext } = useItemNavigation(
+    items,
+    selectedBountyId,
+    setSelectedBountyId
+  );
   const pendingEscrow = bounties.filter((bounty) => bounty.status === "pending_escrow").length;
   const awaitingAdmin = bounties.filter((bounty) => bounty.status === "awaiting_admin_review").length;
 
@@ -234,21 +143,6 @@ export function PosterBountiesPage() {
     } else {
       setSortCol(col);
       setSortDesc(true);
-    }
-  }
-
-  function renderSortIndicator(col: typeof sortCol) {
-    if (sortCol !== col) return null;
-    return sortDesc ? " ↓" : " ↑";
-  }
-
-  async function handleCopy(value: string) {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopyStatus("copied");
-      window.setTimeout(() => setCopyStatus("idle"), 1500);
-    } catch (err) {
-      console.error(err);
     }
   }
 
@@ -301,6 +195,81 @@ export function PosterBountiesPage() {
       setExtendingBountyId(null);
     }
   }
+
+  const columns = useMemo<ColumnDef<Bounty>[]>(
+    () => [
+      {
+        id: "title",
+        header: "Bounty",
+        sortable: true,
+        cell: (bounty) => (
+          <>
+            <span className={styles.bountyTitle} title={bounty.title}>{bounty.title}</span>
+            <div className={styles.date}>{getBountyCategoryLabel(bounty)}</div>
+          </>
+        ),
+      },
+      {
+        id: "status",
+        header: "Status",
+        sortable: true,
+        cell: (bounty) => <StatusPill status={bounty.status} />,
+      },
+      {
+        id: "reward",
+        header: "Reward",
+        align: "right",
+        sortable: true,
+        cell: (bounty) => <div className={styles.amount}>{formatAda(bounty.reward_amount)}</div>,
+      },
+      {
+        id: "submissions",
+        header: "Submissions",
+        align: "right",
+        sortable: true,
+        cell: (bounty) => {
+          const counts = getReviewCounts(bounty);
+          return <div className={styles.amount}>{counts.total}</div>;
+        },
+      },
+      {
+        id: "posted",
+        header: "Posted",
+        sortable: true,
+        cell: (bounty) => (
+          <span className={styles.date} title={bounty.created_at ? new Date(bounty.created_at).toLocaleString() : undefined}>
+            {formatRelativeTime(bounty.created_at)}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        align: "right",
+        sortable: false,
+        cell: (bounty) => (
+          <div className={styles.actions}>
+            {canRetryEscrow(bounty) ? (
+              <button
+                type="button"
+                className={styles.approveBtn}
+                disabled={verifyingBountyId === bounty.id}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void handleRetryEscrow(bounty);
+                }}
+                style={{ padding: "4px 10px", fontSize: 11, minHeight: "auto", marginRight: 8 }}
+              >
+                {verifyingBountyId === bounty.id ? "Checking..." : "Retry"}
+              </button>
+            ) : null}
+            <TableActionChevron ariaLabel="View bounty" icon="eye" />
+          </div>
+        ),
+      },
+    ],
+    [verifyingBountyId]
+  );
 
   return (
     <div className={styles.container}>
@@ -355,133 +324,39 @@ export function PosterBountiesPage() {
         </div>
       </div>
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table} role="grid" aria-label="My bounties">
-          <thead>
-            <tr>
-              <th data-sortable="true" onClick={() => handleSort("title")} aria-sort={sortCol === "title" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={styles.thContent}>Bounty {renderSortIndicator("title")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("status")} aria-sort={sortCol === "status" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={styles.thContent}>Status {renderSortIndicator("status")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("reward")} aria-sort={sortCol === "reward" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={`${styles.thContent} ${styles.right}`}>Reward {renderSortIndicator("reward")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("submissions")} aria-sort={sortCol === "submissions" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={`${styles.thContent} ${styles.right}`}>Submissions {renderSortIndicator("submissions")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("posted")} aria-sort={sortCol === "posted" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={styles.thContent}>Posted {renderSortIndicator("posted")}</div>
-              </th>
-              <th><div className={`${styles.thContent} ${styles.right}`}>Actions</div></th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <AdminTableBodyShimmer columns={7} rows={5} />
-            ) : error ? (
-              <tr>
-                <td colSpan={6}>
-                  <div className={styles.emptyState}>
-                    <h3>Could not load bounties</h3>
-                    <p>{error}</p>
-                    <button type="button" className={styles.clearFilterBtn} onClick={() => void loadBounties()}>Retry</button>
-                  </div>
-                </td>
-              </tr>
-            ) : items.length === 0 ? (
-              <tr>
-                <td colSpan={6}>
-                  <div className={styles.emptyState}>
-                    <h3>{search || filter !== "all" ? "No matching bounties" : "No posted bounties yet"}</h3>
-                    <p>{search || filter !== "all" ? "No bounties match your current filters." : "Post a bounty to start receiving submissions."}</p>
-                    {search || filter !== "all" ? (
-                      <button type="button" className={styles.clearFilterBtn} onClick={() => { setSearch(""); setFilter("all"); }}>Clear filters</button>
-                    ) : (
-                      <Link href="/post-bounty" className={styles.clearFilterBtn}>Post bounty</Link>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              items.map((bounty) => {
-                const counts = getReviewCounts(bounty);
-
-                return (
-                  <tr
-                    key={bounty.id}
-                    onClick={() => setSelectedBountyId(bounty.id)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        setSelectedBountyId(bounty.id);
-                      }
-                    }}
-                  >
-                    <td>
-                      <span className={styles.bountyTitle} title={bounty.title}>{bounty.title}</span>
-                      <div className={styles.date}>{getBountyTypeLabel(bounty)}</div>
-                    </td>
-                    <td>
-                      <span className={styles.statusPill} data-status={getStatusKey(bounty.status)}>
-                        {normalizeStatus(bounty.status)}
-                      </span>
-                    </td>
-                    <td><div className={styles.amount}>{formatAda(bounty.reward_amount)}</div></td>
-                    <td><div className={styles.amount}>{counts.total}</div></td>
-                    <td>
-                      <span className={styles.date} title={bounty.created_at ? new Date(bounty.created_at).toLocaleString() : undefined}>
-                        {formatRelativeTime(bounty.created_at)}
-                      </span>
-                    </td>
-                    <td>
-                      <div className={styles.actions}>
-                        {canRetryEscrow(bounty) ? (
-                          <button
-                            type="button"
-                            className={styles.approveBtn}
-                            disabled={verifyingBountyId === bounty.id}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              void handleRetryEscrow(bounty);
-                            }}
-                            style={{ padding: "4px 10px", fontSize: 11, minHeight: "auto", marginRight: 8 }}
-                          >
-                            {verifyingBountyId === bounty.id ? "Checking..." : "Retry"}
-                          </button>
-                        ) : null}
-                        <button type="button" aria-label="View bounty" tabIndex={-1} style={{ background: "transparent", border: "none", cursor: "pointer", color: "inherit" }}>
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={items}
+        columns={columns}
+        ariaLabel="My bounties"
+        sortCol={sortCol}
+        sortDesc={sortDesc}
+        onSort={handleSort}
+        onRowClick={(bounty) => setSelectedBountyId(bounty.id)}
+        isLoading={isLoading}
+        error={error}
+        onRetry={() => void loadBounties()}
+        emptyState={{
+          title: search || filter !== "all" ? "No matching bounties" : "No posted bounties yet",
+          description: search || filter !== "all" ? "No bounties match your current filters." : "Post a bounty to start receiving submissions.",
+          action: search || filter !== "all" ? (
+            <button type="button" className={styles.clearFilterBtn} onClick={() => { setSearch(""); setFilter("all"); }}>Clear filters</button>
+          ) : (
+            <Link href="/post-bounty" className={styles.clearFilterBtn}>Post bounty</Link>
+          ),
+        }}
+      />
 
       {selectedItem ? (
         <PosterBountyModal
           bounty={selectedItem}
           canGoNext={canGoNext}
           canGoPrev={canGoPrev}
-          copyStatus={copyStatus}
           isExtending={extendingBountyId === selectedItem.id}
           isVerifying={verifyingBountyId === selectedItem.id}
           onClose={() => setSelectedBountyId(null)}
-          onCopy={handleCopy}
           onExtendDeadline={handleExtendDeadline}
-          onNext={() => setSelectedBountyId(items[selectedIndex + 1]?.id || null)}
-          onPrev={() => setSelectedBountyId(items[selectedIndex - 1]?.id || null)}
+          onNext={goToNext}
+          onPrev={goToPrev}
           onRetryEscrow={handleRetryEscrow}
         />
       ) : null}
@@ -493,11 +368,9 @@ function PosterBountyModal({
   bounty,
   canGoNext,
   canGoPrev,
-  copyStatus,
   isExtending,
   isVerifying,
   onClose,
-  onCopy,
   onExtendDeadline,
   onNext,
   onPrev,
@@ -506,11 +379,9 @@ function PosterBountyModal({
   bounty: Bounty;
   canGoNext: boolean;
   canGoPrev: boolean;
-  copyStatus: "idle" | "copied";
   isExtending: boolean;
   isVerifying: boolean;
   onClose: () => void;
-  onCopy: (value: string) => void;
   onExtendDeadline: (bounty: Bounty, newDeadline: string) => Promise<void>;
   onNext: () => void;
   onPrev: () => void;
@@ -536,35 +407,26 @@ function PosterBountyModal({
       <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="poster-bounty-modal-title">
         <div className={styles.modalHeader}>
           <div className={styles.modalHeaderLeft}>
-            <span className={styles.statusPill} data-status={getStatusKey(bounty.status)}>
-              {normalizeStatus(bounty.status)}
-            </span>
+            <StatusPill status={bounty.status} />
             <span className={styles.modalAmount}>{formatAda(bounty.reward_amount)}</span>
             <span className={styles.modalMetaPill}>{normalizeStatus(bounty.payout_type || "single")}</span>
           </div>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close modal">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          <ModalCloseButton onClose={onClose} size={20} />
         </div>
 
         <div className={styles.modalBody}>
           <h3 id="poster-bounty-modal-title" className={styles.modalTitle}>{bounty.title}</h3>
 
           <div className={styles.submitterInfo}>
-            <div className={styles.avatar} aria-hidden="true">{getBountyTypeLabel(bounty).slice(0, 2).toUpperCase()}</div>
+            <InitialsAvatar name={getBountyCategoryLabel(bounty)} />
             <span className={styles.handle} style={{ fontSize: "14px" }}>{bounty.project_name || "Independent bounty"}</span>
             <div className={styles.hashGroup}>
               <span>ID: {shortId(bounty.id)}</span>
-              <button type="button" className={styles.copyBtn} aria-label="Copy bounty ID" aria-live="polite" data-copied={copyStatus === "copied"} onClick={() => void onCopy(bounty.id)}>
-                {copyStatus === "copied" ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
-                )}
-              </button>
+              <CopyIconButton
+                text={bounty.id}
+                label="Copy bounty ID"
+                className={styles.copyBtn}
+              />
             </div>
           </div>
 
@@ -626,7 +488,7 @@ function PosterBountyModal({
               <div className={styles.contextMetaGrid}>
                 <div>
                   <span>Category</span>
-                  <strong>{getBountyTypeLabel(bounty)}</strong>
+                  <strong>{getBountyCategoryLabel(bounty)}</strong>
                 </div>
                 <div>
                   <span>Status</span>
@@ -694,14 +556,13 @@ function PosterBountyModal({
         ) : null}
 
         <div className={styles.modalFooter}>
-          <div className={styles.navControls}>
-            <button type="button" className={styles.navBtn} disabled={!canGoPrev} aria-label="Previous bounty" onClick={onPrev}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-            </button>
-            <button type="button" className={styles.navBtn} disabled={!canGoNext} aria-label="Next bounty" onClick={onNext}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-            </button>
-          </div>
+          <ModalNavControls
+            itemLabel="bounty"
+            canGoPrev={canGoPrev}
+            canGoNext={canGoNext}
+            onPrev={onPrev}
+            onNext={onNext}
+          />
           {canRetryEscrow(bounty) ? (
             <button type="button" className={styles.approveBtn} disabled={isVerifying} onClick={() => void onRetryEscrow(bounty)}>
               {isVerifying ? <div className={styles.spinner} /> : "Retry verification"}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BOUNTY_STATUS, validateCreateBountyPayload } from "@/lib/bountyContract";
 import { supabaseAdmin } from "@/lib/supabase";
+import { getTodayUtcDateString } from "@/features/bounties/domain/bountyLifecycle";
 
 const DEFAULT_PAGE_SIZE = 9;
 const MAX_PAGE_SIZE = 24;
@@ -19,6 +20,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
+    const todayUtc = getTodayUtcDateString();
+
     let query = supabaseAdmin
     .from('bounties')
     .select(`
@@ -29,7 +32,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         logo_url
         )
         `, { count: 'exact' })
-    .in('status', [BOUNTY_STATUS.Open, BOUNTY_STATUS.InReview])
+    .or(`status.eq.${BOUNTY_STATUS.InReview},and(status.eq.${BOUNTY_STATUS.Open},or(deadline.is.null,deadline.gte.${todayUtc}))`)
     .order('created_at', {ascending: false})
 
     if (type && type !== 'all') {

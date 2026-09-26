@@ -6,41 +6,9 @@ import Link from "next/link";
 import { Footer } from "@/components/landing/Footer";
 import { Header } from "@/components/landing/Header";
 import styles from "./ExploreBountiesPage.module.css";
-
-
-type Bounty = {
-  id: string;
-  title: string;
-  description: string;
-  type: string | null;
-  reward_amount: number | string | null;
-  deadline: string | null;
-  created_at: string | null;
-  status?: string | null;
-  project_name?: string | null;
-  project_logo_url?: string | null;
-  payout_type?: string | null;
-  max_winners?: number | null;
-  projects?: {
-    name?: string | null;
-    logo_url?: string | null;
-  } | null;
-};
-
-type BountyPagination = {
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-};
-
-type BountyListResponse = {
-  data?: Bounty[];
-  pagination?: BountyPagination;
-  error?: string;
-};
+import type { Bounty, BountyPagination, BountyListResponse } from "@/types/bounty";
+import { formatAda, formatDate } from "@/lib/formatters";
+import { getDeadlineState, getBountyState, isBountyInReview } from "@/lib/bountyHelpers";
 
 type CategoryOption = {
   value: string;
@@ -75,52 +43,13 @@ const categoryOptions: CategoryOption[] = [
 
 const PAGE_SIZE = 9;
 
-function normalizeType(type: string | null) {
+function normalizeType(type: string | null | undefined) {
   if (!type) return "Other";
   const key = type.trim().toLowerCase();
   return categoryLabels[key] ?? type.trim();
 }
 
-function formatAda(value: Bounty["reward_amount"]) {
-  if (value === null || value === undefined || value === "") return "Reward TBD";
-  const amount = Number(value);
-  if (Number.isNaN(amount)) return `${value} ADA`;
-  return `${new Intl.NumberFormat("en-US").format(amount)} ADA`;
-}
 
-function formatDate(value: string | null) {
-  if (!value) return "Rolling deadline";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Rolling deadline";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
-}
-
-function getDeadlineState(value: string | null) {
-  if (!value) return "Open";
-  const deadline = new Date(value);
-  if (Number.isNaN(deadline.getTime())) return "Open";
-
-  const diff = deadline.getTime() - Date.now();
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-
-  if (days < 0) return "Reviewing";
-  if (days === 0) return "Due today";
-  if (days <= 7) return `${days}d left`;
-  return "Open";
-}
-
-function getBountyState(bounty: Bounty) {
-  if (bounty.status === "in_review") return "In review";
-  return getDeadlineState(bounty.deadline);
-}
-
-function isBountyInReview(bounty: Bounty) {
-  return bounty.status === "in_review";
-}
 
 function getProjectName(bounty: Bounty) {
   return bounty.project_name || bounty.projects?.name || "Independent bounty";

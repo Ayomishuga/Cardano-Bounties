@@ -1,0 +1,27 @@
+.navControls {
+  margin-right: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.navBtn {
+  background: var(--bg-surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.navBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.navBtn:not(:disabled):hover {
+  background: var(--bg-subtle);
+}

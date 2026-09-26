@@ -8,7 +8,8 @@
  * Import from here instead of defining these in each page component.
  */
 
-import type { Bounty, Submission, UserProfile, PayoutType } from "@/types/bounty";
+import type { Bounty, Submission, UserProfile, PayoutType, PrizeSlot } from "@/types/bounty";
+import { MAX_DEADLINE_EXTENSIONS, LOVELACE_PER_ADA } from "@/lib/bountyContract";
 import { shortId, normalizeStatus } from "./formatters";
 
 // ---------------------------------------------------------------------------
@@ -34,6 +35,18 @@ export function getSubmitterHandle(submission: Submission): string {
   return (
     submission.contributor?.display_name ||
     shortId(submission.contributor?.stake_address || submission.contributor_id)
+  );
+}
+
+/**
+ * Returns the most readable handle for a bounty's poster.
+ * Prefers poster.display_name, then poster.stake_address, then created_by.
+ */
+export function getBountyPoster(bounty: Bounty | null | undefined): string {
+  if (!bounty) return "Unknown";
+  return (
+    bounty.poster?.display_name ||
+    shortId(bounty.poster?.stake_address || bounty.created_by)
   );
 }
 
@@ -183,9 +196,12 @@ export function getPayoutSummary(bounty: Bounty | null): string {
   return "Full reward goes to one approved winner.";
 }
 
-export function getBountyCategoryLabel(bounty: Bounty | null): string {
-  if (!bounty) return "Unknown";
-  return normalizeStatus(bounty.custom_type || bounty.type || "Unknown");
+export function getBountyCategoryLabel(
+  bounty: Bounty | null | undefined,
+  fallback = "General",
+): string {
+  if (!bounty) return fallback;
+  return normalizeStatus(bounty.custom_type || bounty.type || fallback);
 }
 
 // ---------------------------------------------------------------------------
@@ -280,5 +296,175 @@ export function isExpiringSoon(deadline: string | null | undefined): boolean {
  * Bounty must be open and have used fewer than MAX_DEADLINE_EXTENSIONS extensions.
  */
 export function canExtendDeadline(bounty: Bounty): boolean {
-  return bounty.status === "open" && (bounty.deadline_extended_count ?? 0) < 2;
+  return bounty.status === "open" && (bounty.deadline_extended_count ?? 0) < MAX_DEADLINE_EXTENSIONS;
 }
+
+// ---------------------------------------------------------------------------
+// Position & Prize Allocation helpers
+// ---------------------------------------------------------------------------
+
+export const RANK_MEDALS: Record<number, string> = {
+  1: "🥇",
+  2: "🥈",
+  3: "🥉",
+};
+
+/**
+ * Returns ordinal string for a rank number (e.g. 1 -> "1st", 2 -> "2nd", 3 -> "3rd", 4 -> "4th").
+ */
+export function getRankOrdinal(rank: number | null | undefined): string {
+  if (!rank || rank < 1) return "";
+  const j = rank % 10;
+  const k = rank % 100;
+  if (j === 1 && k !== 11) return `${rank}st`;
+  if (j === 2 && k !== 12) return `${rank}nd`;
+  if (j === 3 && k !== 13) return `${rank}rd`;
+  return `${rank}th`;
+}
+
+/**
+ * Returns user-facing label for a rank placement (e.g. "1st Place", "2nd Place").
+ */
+export function getRankPlacementLabel(rank: number | null | undefined): string {
+  if (!rank || rank < 1) return "Winner";
+  return `${getRankOrdinal(rank)} Place`;
+}
+
+/**
+ * Returns medal emoji or fallback icon for a rank number.
+ */
+export function getRankMedal(rank: number | null | undefined): string {
+  if (!rank || rank < 1) return "🏆";
+  return RANK_MEDALS[rank] ?? "🏅";
+}
+
+export type BountyPrizeSlot = {
+  rank: number;
+  amount_lovelace: number;
+  amount_ada: number;
+  label: string;
+};
+
+/**
+ * Resolves all defined or calculated prize slots for a bounty based on its payout_type.
+ * Guaranteed to cover all winning positions with exact Lovelace and ADA amounts.
+ */
+export function getBountyPrizeSlots(bounty: Bounty | null | undefined): BountyPrizeSlot[] {
+  if (!bounty) return [];
+  const rewardAmount = Number(bounty.reward_amount || 0);
+  const totalLovelace = Math.round(rewardAmount * LOVELACE_PER_ADA);
+  if (totalLovelace <= 0) return [];
+
+  const payoutType = bounty.payout_type || "single";
+
+  // Case 1: Manual split with configured prize structure
+  if (payoutType === "manual_split" && Array.isArray(bounty.prize_structure) && bounty.prize_structure.length > 0) {
+    return [...bounty.prize_structure]
+      .sort((a, b) => a.rank - b.rank)
+      .map((slot) => ({
+        rank: slot.rank,
+        amount_lovelace: slot.amount_lovelace,
+        amount_ada: slot.amount_lovelace / LOVELACE_PER_ADA,
+        label: `${getRankMedal(slot.rank)} ${getRankPlacementLabel(slot.rank)}`,
+      }));
+  }
+
+  // Case 2: Equal split among max_winners
+  if (payoutType === "equal_split") {
+    const maxWinners = Math.max(2, Number(bounty.max_winners || 2));
+    const baseLovelace = Math.floor(totalLovelace / maxWinners);
+    const remainder = totalLovelace % maxWinners;
+
+    return Array.from({ length: maxWinners }, (_, index) => {
+      const rank = index + 1;
+      const amount_lovelace = rank === 1 ? baseLovelace + remainder : baseLovelace;
+      return {
+        rank,
+        amount_lovelace,
+        amount_ada: amount_lovelace / LOVELACE_PER_ADA,
+        label: `${getRankMedal(rank)} Slot ${rank} (${getRankPlacementLabel(rank)})`,
+      };
+    });
+  }
+
+  // Case 3: Single winner (default)
+  return [
+    {
+      rank: 1,
+      amount_lovelace: totalLovelace,
+      amount_ada: totalLovelace / LOVELACE_PER_ADA,
+      label: "🥇 Winner (1st Place)",
+    },
+  ];
+}
+
+export type AvailablePrizeSlot = BountyPrizeSlot & {
+  isAvailable: boolean;
+  assignedSubmissionId?: string | null;
+  assignedContributorName?: string | null;
+};
+
+/**
+ * Maps bounty prize slots against existing allocations to indicate which slots are available
+ * and which are already assigned to other submissions.
+ */
+export function getAvailablePrizeSlots(
+  bounty: Bounty | null | undefined,
+  existingAllocations?: Array<{
+    rank?: number | null;
+    submission_id?: string | null;
+    status?: string | null;
+    users?: { display_name?: string | null; stake_address?: string | null } | null;
+    contributor_id?: string | null;
+  }> | null,
+): AvailablePrizeSlot[] {
+  const slots = getBountyPrizeSlots(bounty);
+  const activeAllocs = (existingAllocations || []).filter((a) => a.status !== "cancelled");
+
+  return slots.map((slot) => {
+    const alloc = activeAllocs.find((a) => a.rank === slot.rank);
+    if (alloc) {
+      const assignedName =
+        alloc.users?.display_name ||
+        shortId(alloc.users?.stake_address || alloc.contributor_id) ||
+        "Another submission";
+      return {
+        ...slot,
+        isAvailable: false,
+        assignedSubmissionId: alloc.submission_id || null,
+        assignedContributorName: assignedName,
+      };
+    }
+    return {
+      ...slot,
+      isAvailable: true,
+      assignedSubmissionId: null,
+      assignedContributorName: null,
+    };
+  });
+}
+
+/**
+ * Returns the exact Lovelace and ADA amount for a given rank within a bounty.
+ */
+export function getPrizeSlotAmount(
+  bounty: Bounty | null | undefined,
+  rank: number,
+): { amountLovelace: number; amountAda: number } {
+  const slots = getBountyPrizeSlots(bounty);
+  const matching = slots.find((s) => s.rank === rank);
+  if (matching) {
+    return {
+      amountLovelace: matching.amount_lovelace,
+      amountAda: matching.amount_ada,
+    };
+  }
+  // Fallback to full reward if rank 1 or single
+  const rewardAmount = Number(bounty?.reward_amount || 0);
+  const totalLovelace = Math.round(rewardAmount * LOVELACE_PER_ADA);
+  return {
+    amountLovelace: totalLovelace,
+    amountAda: rewardAmount,
+  };
+}
+

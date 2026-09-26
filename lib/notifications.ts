@@ -37,6 +37,7 @@ export async function createNotification({
     })
 
     if (error) {
-        console.error('Failed to create notidication:', error)
+        console.error('Failed to create notification:', error)
     }
 }
+

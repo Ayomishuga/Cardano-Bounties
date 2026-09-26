@@ -4,21 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { authFetch } from "@/lib/api";
 import styles from "./AdminQueue.module.css";
 import Link from "next/link";
-import { AdminTableBodyShimmer } from "@/components/dashboard/ShimmerLoaders";
-
-type Bounty = {
-  id: string;
-  status: string;
-  reward_amount?: number | string | null;
-  submissions?: Submission[];
-};
-
-type Submission = {
-  id: string;
-  status: string;
-  bounties?: Bounty | Bounty[] | null;
-  bounty?: Bounty;
-};
+import type { Bounty, Submission } from "@/types/bounty";
+import { formatAda } from "@/lib/formatters";
+import { getSubmissionBounty } from "@/lib/bountyHelpers";
+import { useEscapeKey } from "@/hooks/useEscapeKey";
+import { StatusPill } from "@/components/shared/StatusPill";
+import { ModalCloseButton } from "@/components/shared/ModalCloseButton";
+import { DataTable, type ColumnDef } from "@/components/shared/DataTable";
+import { TableActionChevron } from "@/components/shared/TableActionChevron";
 
 type DashboardResponse = {
   metrics: Record<string, number>;
@@ -40,17 +33,6 @@ type TreasuryMetric = {
   linkTo?: string;
   linkText?: string;
 };
-
-function formatAda(value: number | string | null | undefined) {
-  const amount = Number(value || 0);
-  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 6 }).format(amount)} ADA`;
-}
-
-function getSubmissionBounty(submission: Submission) {
-  if (submission.bounty) return submission.bounty;
-  if (Array.isArray(submission.bounties)) return submission.bounties[0];
-  return submission.bounties || null;
-}
 
 export function AdminTreasuryPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
@@ -154,97 +136,69 @@ export function AdminTreasuryPage() {
     setSelectedMetricId(null);
   };
 
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && selectedMetricId) {
-        handleCloseModal();
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [selectedMetricId]);
+  useEscapeKey(handleCloseModal, Boolean(selectedMetricId));
+
+  const columns = useMemo<ColumnDef<TreasuryMetric>[]>(() => [
+    {
+      id: "metric",
+      header: "Metric",
+      cell: (metric) => <span style={{ fontWeight: 500 }}>{metric.metric}</span>,
+    },
+    {
+      id: "value",
+      header: "Value",
+      cell: (metric) => <div className={styles.amount} style={{ fontSize: '16px' }}>{metric.value}</div>,
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: (metric) => <StatusPill status={metric.status} label={metric.status} />,
+    },
+    {
+      id: "notes",
+      header: "Notes",
+      cell: (metric) => <span style={{ color: 'var(--muted)', fontSize: '14px' }}>{metric.notes}</span>,
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      align: "right",
+      cell: () => (
+        <TableActionChevron
+          ariaLabel="View metric"
+          icon={
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="3" r="3" />
+            </svg>
+          }
+        />
+      ),
+    },
+  ], []);
 
   return (
     <div className={styles.container}>
-      <div className={styles.tableWrap}>
-        <table className={styles.table} role="grid" aria-label="Treasury">
-          <thead>
-            <tr>
-              <th><div className={styles.thContent}>Metric</div></th>
-              <th><div className={styles.thContent}>Value</div></th>
-              <th><div className={styles.thContent}>Status</div></th>
-              <th><div className={styles.thContent}>Notes</div></th>
-              <th><div className={`${styles.thContent} ${styles.right}`}>Actions</div></th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <AdminTableBodyShimmer columns={6} rows={5} />
-            ) : error ? (
-              <tr>
-                <td colSpan={5}>
-                  <div className={styles.emptyState}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="8" x2="12" y2="12" />
-                      <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                    <h3>Couldn't load treasury metrics</h3>
-                    <p>{error}</p>
-                    <button type="button" className={styles.clearFilterBtn} onClick={() => void loadDashboard()}>Retry</button>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              items.map((metric) => (
-                <tr key={metric.id} onClick={() => handleRowClick(metric.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleRowClick(metric.id); } }}>
-                  <td>
-                    <span style={{ fontWeight: 500 }}>{metric.metric}</span>
-                  </td>
-                  <td>
-                    <div className={styles.amount} style={{ fontSize: '16px' }}>{metric.value}</div>
-                  </td>
-                  <td>
-                    <span className={styles.statusPill} data-status={metric.status === "Committed" ? "approved" : metric.status === "Needs payment" ? "warning" : metric.status === "Needs review" ? "danger" : "pending"}>
-                      {metric.status}
-                    </span>
-                  </td>
-                  <td>
-                    <span style={{ color: 'var(--muted)', fontSize: '14px' }}>{metric.notes}</span>
-                  </td>
-                  <td>
-                    <div className={styles.actions}>
-                      <button type="button" aria-label="View metric" tabIndex={-1} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit' }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={items}
+        columns={columns}
+        ariaLabel="Treasury"
+        isLoading={isLoading}
+        error={error}
+        errorTitle="Couldn't load treasury metrics"
+        onRetry={() => void loadDashboard()}
+        onRowClick={(metric) => handleRowClick(metric.id)}
+      />
 
       {selectedItem && (
         <div className={styles.modalBackdrop} onClick={(e) => { if (e.target === e.currentTarget) handleCloseModal(); }}>
           <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <div className={styles.modalHeader}>
               <div className={styles.modalHeaderLeft}>
-                <span className={styles.statusPill} data-status={selectedItem.status === "Committed" ? "approved" : selectedItem.status === "Needs payment" ? "warning" : selectedItem.status === "Needs review" ? "danger" : "pending"}>
-                  {selectedItem.status}
-                </span>
+                <StatusPill status={selectedItem.status} label={selectedItem.status} />
                 <span className={styles.modalAmount}>{selectedItem.value}</span>
               </div>
-              <button type="button" className={styles.closeBtn} onClick={handleCloseModal} aria-label="Close modal">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+              <ModalCloseButton onClose={handleCloseModal} size={20} />
             </div>
             
             <div className={styles.modalBody}>

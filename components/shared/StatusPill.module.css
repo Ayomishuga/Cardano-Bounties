@@ -1,42 +1,44 @@
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.625rem;
+  padding: 4px 10px;
   border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: capitalize;
-  line-height: 1;
-  background: var(--bg-subtle);
-  color: var(--text-secondary);
-  border: 1px solid var(--line-soft);
+  line-height: 1.2;
+  background: var(--bg-subtle, #f3f4f6);
+  color: var(--text-secondary, #6b7280);
+}
+
+.pill[data-status="pending"],
+.pill[data-status="submitted"],
+.pill[data-status="pending_escrow"],
+.pill[data-status="awaiting_admin_review"],
+.pill[data-status="in_review"],
+.pill[data-status="payout_pending"],
+.pill[data-status="warning"] {
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
 }
 
 .pill[data-status="open"],
 .pill[data-status="approved"],
-.pill[data-status="completed"],
-.pill[data-status="paid"] {
-  background: rgba(16, 185, 129, 0.12);
+.pill[data-status="recommended_approval"],
+.pill[data-status="recommended"],
+.pill[data-status="paid"],
+.pill[data-status="completed"] {
+  background: var(--status-success-bg);
   color: var(--status-success-text);
-  border-color: rgba(16, 185, 129, 0.25);
-}
-
-.pill[data-status="pending"],
-.pill[data-status="awaiting_admin_review"],
-.pill[data-status="in_review"],
-.pill[data-status="pending_escrow"],
-.pill[data-status="payout_pending"] {
-  background: rgba(245, 158, 11, 0.12);
-  color: var(--status-warning-text);
-  border-color: rgba(245, 158, 11, 0.25);
 }
 
 .pill[data-status="rejected"],
+.pill[data-status="changes_requested"],
+.pill[data-status="not_selected"],
 .pill[data-status="failed"],
 .pill[data-status="cancelled"],
-.pill[data-status="expired"] {
-  background: rgba(239, 68, 68, 0.12);
+.pill[data-status="expired"],
+.pill[data-status="danger"] {
+  background: var(--status-danger-bg);
   color: var(--status-danger-text);
-  border-color: rgba(239, 68, 68, 0.25);
 }

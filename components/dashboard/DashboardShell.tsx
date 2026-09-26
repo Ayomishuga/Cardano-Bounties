@@ -9,6 +9,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useAppWallet } from "@/components/wallet/WalletProvider";
 import { authFetch } from "@/lib/api";
+import { shortId } from "@/lib/formatters";
 import styles from "@/app/pages/DashboardPage.module.css";
 
 type DashboardCounts = {
@@ -119,11 +120,6 @@ const POSTER_ALLOWED_PATHS = new Set([
   "/dashboard/contributions",
 ]);
 
-function shortId(value: string | null | undefined) {
-  if (!value) return "Unknown";
-  if (value.length <= 16) return value;
-  return `${value.slice(0, 10)}...${value.slice(-6)}`;
-}
 
 function getNavGroups(metrics: Record<string, number>, role: string) {
   if (role === "admin") {

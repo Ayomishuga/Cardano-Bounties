@@ -1206,3 +1206,122 @@
   font-weight: 600;
   font-family: ui-monospace, monospace;
 }
+
+/* Position Allocation Selector */
+.allocationSection {
+  padding: 16px;
+  background: var(--bg-surface-muted, #f8fafc);
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 12px;
+  margin-top: 16px;
+}
+
+.allocationSectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.allocationSectionDesc {
+  font-size: 12px;
+  color: var(--muted, #64748b);
+  margin: 0 0 12px 0;
+}
+
+.positionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.positionCard {
+  border: 1.5px solid var(--line, #e2e8f0);
+  background: var(--bg-surface, #ffffff);
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.positionCard:hover:not([data-disabled="true"]) {
+  border-color: var(--blue, #3b82f6);
+  background: rgba(59, 130, 246, 0.04);
+}
+
+.positionCard[data-selected="true"] {
+  border-color: var(--blue, #3b82f6);
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: 0 0 0 1px var(--blue, #3b82f6);
+}
+
+.positionCard[data-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--bg-subtle, #f1f5f9);
+}
+
+.positionCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.positionCardRank {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.positionCardAmount {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--status-success-text, #16a34a);
+}
+
+.positionBadgeAvailable {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(22, 163, 74, 0.12);
+  color: var(--status-success-text, #16a34a);
+}
+
+.positionBadgeAssigned {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(100, 116, 139, 0.12);
+  color: var(--muted, #64748b);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lockedCallout {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(15, 118, 110, 0.06);
+  border: 1px solid rgba(15, 118, 110, 0.2);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--teal, #0f766e);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+

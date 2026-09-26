@@ -1,11 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { DataTable, type ColumnDef } from "@/components/shared/DataTable";
+import { TableActionChevron } from "@/components/shared/TableActionChevron";
 import styles from "./AdminQueue.module.css";
+
+type Dispute = {
+  id: string;
+  bounty: string;
+  raisedBy: string;
+  reason: string;
+  status: string;
+  openedAt: string;
+};
 
 export function AdminDisputesPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all"); 
+
+  const columns = useMemo<ColumnDef<Dispute>[]>(() => [
+    { id: "id", header: "ID", cell: (d) => d.id },
+    { id: "bounty", header: "Bounty", cell: (d) => d.bounty },
+    { id: "raisedBy", header: "Raised by", cell: (d) => d.raisedBy },
+    { id: "reason", header: "Reason", cell: (d) => d.reason },
+    { id: "status", header: "Status", cell: (d) => d.status },
+    { id: "openedAt", header: "Opened at", cell: (d) => d.openedAt },
+    { id: "actions", header: "Actions", align: "right", cell: () => <TableActionChevron /> },
+  ], []);
 
   return (
     <div className={styles.container}>
@@ -40,36 +61,22 @@ export function AdminDisputesPage() {
         </div>
       </div>
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table} role="grid" aria-label="Disputes">
-          <thead>
-            <tr>
-              <th><div className={styles.thContent}>ID</div></th>
-              <th><div className={styles.thContent}>Bounty</div></th>
-              <th><div className={styles.thContent}>Raised by</div></th>
-              <th><div className={styles.thContent}>Reason</div></th>
-              <th><div className={styles.thContent}>Status</div></th>
-              <th><div className={styles.thContent}>Opened at</div></th>
-              <th><div className={`${styles.thContent} ${styles.right}`}>Actions</div></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colSpan={7}>
-                <div className={styles.emptyState}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                    <line x1="12" y1="9" x2="12" y2="13" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                  </svg>
-                  <h3>No disputes yet</h3>
-                  <p>Dispute records will appear here after the dispute intake workflow is enabled.</p>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={[]}
+        columns={columns}
+        ariaLabel="Disputes"
+        emptyState={{
+          icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          ),
+          title: "No disputes yet",
+          description: "Dispute records will appear here after the dispute intake workflow is enabled.",
+        }}
+      />
     </div>
   );
 }

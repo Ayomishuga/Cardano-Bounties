@@ -110,7 +110,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .order("submitted_at", { ascending: false }),
     supabaseAdmin
       .from("bounty_payout_allocations")
-      .select("id, bounty_id, amount_lovelace, status"),
+      .select("id, bounty_id, submission_id, rank, amount_lovelace, status"),
   ]);
 
   if (bountiesResult.error) {

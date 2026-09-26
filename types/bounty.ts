@@ -55,6 +55,7 @@ export type UserProfile = {
   stake_address?: string | null;
   display_name?: string | null;
   role?: string | null;
+  bio?: string | null;
 };
 
 /** A bounty record as returned by the API (public or admin endpoints). */

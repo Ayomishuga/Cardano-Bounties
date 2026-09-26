@@ -4,23 +4,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/toast/ToastProvider";
 import { authFetch } from "@/lib/api";
 import styles from "./AdminQueue.module.css";
-import { AdminTableBodyShimmer } from "@/components/dashboard/ShimmerLoaders";
-
-type UserProfile = {
-  id: string;
-  stake_address?: string | null;
-  display_name?: string | null;
-};
-
-type Bounty = {
-  id: string;
-  title: string;
-  status: string;
-  reward_amount?: number | string | null;
-  created_by?: string | null;
-  created_at?: string | null;
-  poster?: UserProfile | null;
-};
+import type { Bounty } from "@/types/bounty";
+import { formatAda, formatDate, shortId } from "@/lib/formatters";
+import { useEscapeKey } from "@/hooks/useEscapeKey";
+import { CopyIconButton } from "@/components/shared/CopyIconButton";
+import { StatusPill } from "@/components/shared/StatusPill";
+import { InitialsAvatar } from "@/components/shared/InitialsAvatar";
+import { ModalCloseButton } from "@/components/shared/ModalCloseButton";
+import { ModalNavControls } from "@/components/shared/ModalNavControls";
+import { useItemNavigation } from "@/hooks/useItemNavigation";
+import { DataTable, type ColumnDef } from "@/components/shared/DataTable";
+import { TableActionChevron } from "@/components/shared/TableActionChevron";
 
 type DashboardResponse = {
   queues: {
@@ -41,38 +35,6 @@ type PosterStats = {
   joined: string;
 };
 
-function formatAda(value: number | string | null | undefined) {
-  const amount = Number(value || 0);
-  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 6 }).format(amount)} ADA`;
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "Not recorded";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not recorded";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
-}
-
-function normalizeStatus(value: string | null | undefined) {
-  if (!value) return "Pending";
-  return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function shortId(value: string | null | undefined) {
-  if (!value) return "Unknown";
-  if (value.length <= 16) return value;
-  return `${value.slice(0, 10)}...${value.slice(-6)}`;
-}
-
-function getInitials(name: string | null | undefined) {
-  if (!name) return "?";
-  return name.slice(0, 2).toUpperCase();
-}
-
 export function AdminPostersPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,7 +45,6 @@ export function AdminPostersPage() {
   const [sortDesc, setSortDesc] = useState(true);
   
   const [selectedPosterKey, setSelectedPosterKey] = useState<string | null>(null);
-  const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true);
@@ -186,10 +147,12 @@ export function AdminPostersPage() {
     return list;
   }, [data, search, sortCol, sortDesc]);
 
-  const selectedItem = useMemo(() => items.find((p) => p.key === selectedPosterKey) || null, [items, selectedPosterKey]);
-  const selectedIndex = items.findIndex((p) => p.key === selectedPosterKey);
-  const canGoPrev = selectedIndex > 0;
-  const canGoNext = selectedIndex !== -1 && selectedIndex < items.length - 1;
+  const { selectedItem, canGoPrev, canGoNext, goToPrev, goToNext } = useItemNavigation(
+    items,
+    selectedPosterKey,
+    setSelectedPosterKey,
+    (p) => p.key
+  );
 
   const handleSort = (col: typeof sortCol) => {
     if (sortCol === col) {
@@ -208,30 +171,70 @@ export function AdminPostersPage() {
     setSelectedPosterKey(null);
   };
 
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && selectedPosterKey) {
-        handleCloseModal();
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [selectedPosterKey]);
+  useEscapeKey(handleCloseModal, Boolean(selectedPosterKey));
 
-  const handleCopyHash = async (hash: string) => {
-    try {
-      await navigator.clipboard.writeText(hash);
-      setCopyStatus("copied");
-      setTimeout(() => setCopyStatus("idle"), 1500);
-    } catch (e) {
-      // Ignored
-    }
-  };
-
-  const renderSortIndicator = (col: typeof sortCol) => {
-    if (sortCol !== col) return null;
-    return sortDesc ? " ↓" : " ↑";
-  };
+  const columns = useMemo<ColumnDef<PosterStats>[]>(
+    () => [
+      {
+        id: "wallet",
+        header: "Wallet",
+        sortable: true,
+        cell: (poster) => {
+          const handle = poster.displayName || shortId(poster.wallet);
+          return (
+            <div className={styles.submitter}>
+              <InitialsAvatar name={handle} />
+              <span className={styles.handle} title={poster.wallet}>
+                {handle}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        id: "total",
+        header: "Total Bounties",
+        align: "right",
+        sortable: true,
+        cell: (poster) => <div className={styles.amount}>{poster.totalBounties}</div>,
+      },
+      {
+        id: "ada",
+        header: "Total ADA",
+        align: "right",
+        sortable: true,
+        cell: (poster) => <div className={styles.amount}>{formatAda(poster.totalAda)}</div>,
+      },
+      {
+        id: "approval",
+        header: "Approval Rate",
+        align: "right",
+        sortable: true,
+        cell: (poster) => <div className={styles.amount}>{poster.approvalRate}%</div>,
+      },
+      {
+        id: "active",
+        header: "Active Bounties",
+        align: "right",
+        sortable: true,
+        cell: (poster) => <div className={styles.amount}>{poster.activeBounties}</div>,
+      },
+      {
+        id: "joined",
+        header: "Joined",
+        sortable: true,
+        cell: (poster) => <span className={styles.date}>{formatDate(poster.joined)}</span>,
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        align: "right",
+        sortable: false,
+        cell: () => <TableActionChevron ariaLabel="View poster" icon="eye" />,
+      },
+    ],
+    []
+  );
 
   return (
     <div className={styles.container}>
@@ -251,151 +254,53 @@ export function AdminPostersPage() {
         </div>
       </div>
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table} role="grid" aria-label="Posters">
-          <thead>
-            <tr>
-              <th data-sortable="true" onClick={() => handleSort("wallet")} aria-sort={sortCol === "wallet" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={styles.thContent}>Wallet {renderSortIndicator("wallet")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("total")} aria-sort={sortCol === "total" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={`${styles.thContent} ${styles.right}`}>Total Bounties {renderSortIndicator("total")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("ada")} aria-sort={sortCol === "ada" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={`${styles.thContent} ${styles.right}`}>Total ADA {renderSortIndicator("ada")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("approval")} aria-sort={sortCol === "approval" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={`${styles.thContent} ${styles.right}`}>Approval Rate {renderSortIndicator("approval")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("active")} aria-sort={sortCol === "active" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={`${styles.thContent} ${styles.right}`}>Active Bounties {renderSortIndicator("active")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("joined")} aria-sort={sortCol === "joined" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={styles.thContent}>Joined {renderSortIndicator("joined")}</div>
-              </th>
-              <th><div className={`${styles.thContent} ${styles.right}`}>Actions</div></th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <AdminTableBodyShimmer columns={8} rows={5} />
-            ) : error ? (
-              <tr>
-                <td colSpan={7}>
-                  <div className={styles.emptyState}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="8" x2="12" y2="12" />
-                      <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                    <h3>Couldn't load posters</h3>
-                    <p>{error}</p>
-                    <button type="button" className={styles.clearFilterBtn} onClick={() => void loadDashboard()}>Retry</button>
-                  </div>
-                </td>
-              </tr>
-            ) : items.length === 0 ? (
-              <tr>
-                <td colSpan={7}>
-                  <div className={styles.emptyState}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                      <line x1="3" y1="9" x2="21" y2="9" />
-                      <line x1="9" y1="21" x2="9" y2="9" />
-                    </svg>
-                    {search ? (
-                      <>
-                        <h3>No matching posters</h3>
-                        <p>No posters match your search.</p>
-                        <button type="button" className={styles.clearFilterBtn} onClick={() => setSearch("")}>Clear search</button>
-                      </>
-                    ) : (
-                      <>
-                        <h3>No posters found</h3>
-                        <p>There are no posters in the system yet.</p>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              items.map((poster) => {
-                const handle = poster.displayName || shortId(poster.wallet);
-                
-                return (
-                  <tr key={poster.key} onClick={() => handleRowClick(poster.key)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleRowClick(poster.key); } }}>
-                    <td>
-                      <div className={styles.submitter}>
-                        <div className={styles.avatar} aria-hidden="true">{getInitials(handle)}</div>
-                        <span className={styles.handle} title={poster.wallet}>{handle}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className={styles.amount}>{poster.totalBounties}</div>
-                    </td>
-                    <td>
-                      <div className={styles.amount}>{formatAda(poster.totalAda)}</div>
-                    </td>
-                    <td>
-                      <div className={styles.amount}>{poster.approvalRate}%</div>
-                    </td>
-                    <td>
-                      <div className={styles.amount}>{poster.activeBounties}</div>
-                    </td>
-                    <td>
-                      <span className={styles.date}>{formatDate(poster.joined)}</span>
-                    </td>
-                    <td>
-                      <div className={styles.actions}>
-                        <button type="button" aria-label="View poster" tabIndex={-1} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit' }}>
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={items}
+        columns={columns}
+        ariaLabel="Posters"
+        sortCol={sortCol}
+        sortDesc={sortDesc}
+        onSort={handleSort}
+        onRowClick={(poster) => handleRowClick(poster.key)}
+        keyExtractor={(poster) => poster.key}
+        isLoading={isLoading}
+        error={error}
+        onRetry={() => void loadDashboard()}
+        emptyState={{
+          title: search ? "No matching posters" : "No posters found",
+          description: search ? "No posters match your search." : "There are no posters in the system yet.",
+          action: search ? (
+            <button type="button" className={styles.clearFilterBtn} onClick={() => setSearch("")}>
+              Clear search
+            </button>
+          ) : undefined,
+        }}
+      />
 
       {selectedItem && (
         <div className={styles.modalBackdrop} onClick={(e) => { if (e.target === e.currentTarget) handleCloseModal(); }}>
           <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <div className={styles.modalHeader}>
               <div className={styles.modalHeaderLeft}>
-                <span className={styles.statusPill} data-status="approved">
-                  {selectedItem.approvalRate}% Approval
-                </span>
+                <StatusPill status="approved" label={`${selectedItem.approvalRate}% Approval`} />
                 <span className={styles.modalAmount}>{formatAda(selectedItem.totalAda)}</span>
               </div>
-              <button type="button" className={styles.closeBtn} onClick={handleCloseModal} aria-label="Close modal">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+              <ModalCloseButton onClose={handleCloseModal} size={20} />
             </div>
             
             <div className={styles.modalBody}>
               <h3 id="modal-title" className={styles.modalTitle}>{selectedItem.displayName || "Poster Profile"}</h3>
               
               <div className={styles.submitterInfo}>
-                <div className={styles.avatar} aria-hidden="true">{getInitials(selectedItem.displayName || shortId(selectedItem.wallet))}</div>
+                <InitialsAvatar name={selectedItem.displayName || shortId(selectedItem.wallet)} />
                 <span className={styles.handle} style={{ fontSize: '14px' }}>{shortId(selectedItem.wallet)}</span>
                 
                 <div className={styles.hashGroup}>
-                  <button type="button" className={styles.copyBtn} aria-label="Copy poster address" aria-live="polite" data-copied={copyStatus === "copied"} onClick={() => void handleCopyHash(selectedItem.wallet)}>
-                    {copyStatus === "copied" ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    ) : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    )}
-                  </button>
+                  <CopyIconButton
+                    text={selectedItem.wallet}
+                    label="Copy poster address"
+                    className={styles.copyBtn}
+                  />
                 </div>
               </div>
 
@@ -406,7 +311,7 @@ export function AdminPostersPage() {
                     {selectedItem.bounties.slice(0, 5).map((b) => (
                       <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
                         <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '250px' }}>{b.title}</span>
-                        <span className={styles.statusPill} data-status={b.status.toLowerCase() === "open" ? "approved" : b.status.toLowerCase()}>{normalizeStatus(b.status)}</span>
+                        <StatusPill status={b.status} />
                       </div>
                     ))}
                     {selectedItem.bounties.length > 5 && (
@@ -420,14 +325,13 @@ export function AdminPostersPage() {
             </div>
 
             <div className={styles.modalFooter}>
-              <div className={styles.navControls}>
-                <button type="button" className={styles.navBtn} disabled={!canGoPrev} aria-label="Previous poster" onClick={() => setSelectedPosterKey(items[selectedIndex - 1]?.key || null)}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <button type="button" className={styles.navBtn} disabled={!canGoNext} aria-label="Next poster" onClick={() => setSelectedPosterKey(items[selectedIndex + 1]?.key || null)}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-              </div>
+              <ModalNavControls
+                itemLabel="poster"
+                canGoPrev={canGoPrev}
+                canGoNext={canGoNext}
+                onPrev={goToPrev}
+                onNext={goToNext}
+              />
 
               <button type="button" className={styles.rejectBtn} disabled>
                 Suspend Account

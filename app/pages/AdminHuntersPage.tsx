@@ -4,22 +4,18 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/toast/ToastProvider";
 import { authFetch } from "@/lib/api";
 import styles from "./AdminQueue.module.css";
-import { AdminTableBodyShimmer } from "@/components/dashboard/ShimmerLoaders";
-
-type Bounty = {
-  id: string;
-  title: string;
-  reward_amount?: number | string | null;
-};
-
-type Submission = {
-  id: string;
-  contributor_id?: string | null;
-  status: string;
-  submitted_at?: string | null;
-  bounties?: Bounty | Bounty[] | null;
-  bounty?: Bounty;
-};
+import type { Bounty, Submission } from "@/types/bounty";
+import { formatAda, formatDate, shortId } from "@/lib/formatters";
+import { getSubmissionBounty } from "@/lib/bountyHelpers";
+import { useEscapeKey } from "@/hooks/useEscapeKey";
+import { CopyIconButton } from "@/components/shared/CopyIconButton";
+import { StatusPill } from "@/components/shared/StatusPill";
+import { InitialsAvatar } from "@/components/shared/InitialsAvatar";
+import { ModalCloseButton } from "@/components/shared/ModalCloseButton";
+import { ModalNavControls } from "@/components/shared/ModalNavControls";
+import { useItemNavigation } from "@/hooks/useItemNavigation";
+import { DataTable, type ColumnDef } from "@/components/shared/DataTable";
+import { TableActionChevron } from "@/components/shared/TableActionChevron";
 
 type DashboardResponse = {
   queues: {
@@ -41,44 +37,6 @@ type HunterStats = {
   lastActive: string;
 };
 
-function formatAda(value: number | string | null | undefined) {
-  const amount = Number(value || 0);
-  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 6 }).format(amount)} ADA`;
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return "Not recorded";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not recorded";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
-}
-
-function normalizeStatus(value: string | null | undefined) {
-  if (!value) return "Pending";
-  return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function shortId(value: string | null | undefined) {
-  if (!value) return "Unknown";
-  if (value.length <= 16) return value;
-  return `${value.slice(0, 10)}...${value.slice(-6)}`;
-}
-
-function getInitials(name: string | null | undefined) {
-  if (!name) return "?";
-  return name.slice(0, 2).toUpperCase();
-}
-
-function getSubmissionBounty(submission: Submission) {
-  if (submission.bounty) return submission.bounty;
-  if (Array.isArray(submission.bounties)) return submission.bounties[0];
-  return submission.bounties || null;
-}
-
 export function AdminHuntersPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,7 +47,6 @@ export function AdminHuntersPage() {
   const [sortDesc, setSortDesc] = useState(true);
   
   const [selectedHunterKey, setSelectedHunterKey] = useState<string | null>(null);
-  const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true);
@@ -191,10 +148,12 @@ export function AdminHuntersPage() {
     return list;
   }, [data, search, sortCol, sortDesc]);
 
-  const selectedItem = useMemo(() => items.find((h) => h.key === selectedHunterKey) || null, [items, selectedHunterKey]);
-  const selectedIndex = items.findIndex((h) => h.key === selectedHunterKey);
-  const canGoPrev = selectedIndex > 0;
-  const canGoNext = selectedIndex !== -1 && selectedIndex < items.length - 1;
+  const { selectedItem, canGoPrev, canGoNext, goToPrev, goToNext } = useItemNavigation(
+    items,
+    selectedHunterKey,
+    setSelectedHunterKey,
+    (h) => h.key
+  );
 
   const handleSort = (col: typeof sortCol) => {
     if (sortCol === col) {
@@ -213,30 +172,67 @@ export function AdminHuntersPage() {
     setSelectedHunterKey(null);
   };
 
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && selectedHunterKey) {
-        handleCloseModal();
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [selectedHunterKey]);
+  useEscapeKey(handleCloseModal, Boolean(selectedHunterKey));
 
-  const handleCopyHash = async (hash: string) => {
-    try {
-      await navigator.clipboard.writeText(hash);
-      setCopyStatus("copied");
-      setTimeout(() => setCopyStatus("idle"), 1500);
-    } catch (e) {
-      // Ignored
-    }
-  };
-
-  const renderSortIndicator = (col: typeof sortCol) => {
-    if (sortCol !== col) return null;
-    return sortDesc ? " ↓" : " ↑";
-  };
+  const columns = useMemo<ColumnDef<HunterStats>[]>(
+    () => [
+      {
+        id: "wallet",
+        header: "Wallet",
+        sortable: true,
+        cell: (hunter) => (
+          <div className={styles.submitter}>
+            <InitialsAvatar name={hunter.wallet} />
+            <span className={styles.handle} title={hunter.wallet}>
+              {shortId(hunter.wallet)}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: "total",
+        header: "Total Submissions",
+        align: "right",
+        sortable: true,
+        cell: (hunter) => <div className={styles.amount}>{hunter.totalSubmissions}</div>,
+      },
+      {
+        id: "accepted",
+        header: "Accepted",
+        align: "right",
+        sortable: true,
+        cell: (hunter) => <div className={styles.amount}>{hunter.accepted}</div>,
+      },
+      {
+        id: "ada",
+        header: "ADA Earned",
+        align: "right",
+        sortable: true,
+        cell: (hunter) => <div className={styles.amount}>{formatAda(hunter.adaEarned)}</div>,
+      },
+      {
+        id: "active",
+        header: "Active Submissions",
+        align: "right",
+        sortable: true,
+        cell: (hunter) => <div className={styles.amount}>{hunter.activeSubmissions}</div>,
+      },
+      {
+        id: "last",
+        header: "Last Active",
+        sortable: true,
+        cell: (hunter) => <span className={styles.date}>{formatDate(hunter.lastActive)}</span>,
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        align: "right",
+        sortable: false,
+        cell: () => <TableActionChevron ariaLabel="View hunter" icon="eye" />,
+      },
+    ],
+    []
+  );
 
   return (
     <div className={styles.container}>
@@ -256,149 +252,53 @@ export function AdminHuntersPage() {
         </div>
       </div>
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table} role="grid" aria-label="Hunters">
-          <thead>
-            <tr>
-              <th data-sortable="true" onClick={() => handleSort("wallet")} aria-sort={sortCol === "wallet" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={styles.thContent}>Wallet {renderSortIndicator("wallet")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("total")} aria-sort={sortCol === "total" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={`${styles.thContent} ${styles.right}`}>Total Submissions {renderSortIndicator("total")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("accepted")} aria-sort={sortCol === "accepted" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={`${styles.thContent} ${styles.right}`}>Accepted {renderSortIndicator("accepted")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("ada")} aria-sort={sortCol === "ada" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={`${styles.thContent} ${styles.right}`}>ADA Earned {renderSortIndicator("ada")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("active")} aria-sort={sortCol === "active" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={`${styles.thContent} ${styles.right}`}>Active Submissions {renderSortIndicator("active")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("last")} aria-sort={sortCol === "last" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={styles.thContent}>Last Active {renderSortIndicator("last")}</div>
-              </th>
-              <th><div className={`${styles.thContent} ${styles.right}`}>Actions</div></th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <AdminTableBodyShimmer columns={8} rows={5} />
-            ) : error ? (
-              <tr>
-                <td colSpan={7}>
-                  <div className={styles.emptyState}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="8" x2="12" y2="12" />
-                      <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                    <h3>Couldn't load hunters</h3>
-                    <p>{error}</p>
-                    <button type="button" className={styles.clearFilterBtn} onClick={() => void loadDashboard()}>Retry</button>
-                  </div>
-                </td>
-              </tr>
-            ) : items.length === 0 ? (
-              <tr>
-                <td colSpan={7}>
-                  <div className={styles.emptyState}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                      <line x1="3" y1="9" x2="21" y2="9" />
-                      <line x1="9" y1="21" x2="9" y2="9" />
-                    </svg>
-                    {search ? (
-                      <>
-                        <h3>No matching hunters</h3>
-                        <p>No hunters match your search.</p>
-                        <button type="button" className={styles.clearFilterBtn} onClick={() => setSearch("")}>Clear search</button>
-                      </>
-                    ) : (
-                      <>
-                        <h3>No hunters found</h3>
-                        <p>There are no hunters in the system yet.</p>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              items.map((hunter) => {
-                return (
-                  <tr key={hunter.key} onClick={() => handleRowClick(hunter.key)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleRowClick(hunter.key); } }}>
-                    <td>
-                      <div className={styles.submitter}>
-                        <div className={styles.avatar} aria-hidden="true">{getInitials(hunter.wallet)}</div>
-                        <span className={styles.handle} title={hunter.wallet}>{shortId(hunter.wallet)}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className={styles.amount}>{hunter.totalSubmissions}</div>
-                    </td>
-                    <td>
-                      <div className={styles.amount}>{hunter.accepted}</div>
-                    </td>
-                    <td>
-                      <div className={styles.amount}>{formatAda(hunter.adaEarned)}</div>
-                    </td>
-                    <td>
-                      <div className={styles.amount}>{hunter.activeSubmissions}</div>
-                    </td>
-                    <td>
-                      <span className={styles.date}>{formatDate(hunter.lastActive)}</span>
-                    </td>
-                    <td>
-                      <div className={styles.actions}>
-                        <button type="button" aria-label="View hunter" tabIndex={-1} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit' }}>
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={items}
+        columns={columns}
+        ariaLabel="Hunters"
+        sortCol={sortCol}
+        sortDesc={sortDesc}
+        onSort={handleSort}
+        onRowClick={(hunter) => handleRowClick(hunter.key)}
+        keyExtractor={(hunter) => hunter.key}
+        isLoading={isLoading}
+        error={error}
+        onRetry={() => void loadDashboard()}
+        emptyState={{
+          title: search ? "No matching hunters" : "No hunters found",
+          description: search ? "No hunters match your search." : "There are no hunters in the system yet.",
+          action: search ? (
+            <button type="button" className={styles.clearFilterBtn} onClick={() => setSearch("")}>
+              Clear search
+            </button>
+          ) : undefined,
+        }}
+      />
 
       {selectedItem && (
         <div className={styles.modalBackdrop} onClick={(e) => { if (e.target === e.currentTarget) handleCloseModal(); }}>
           <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <div className={styles.modalHeader}>
               <div className={styles.modalHeaderLeft}>
-                <span className={styles.statusPill} data-status="approved">
-                  {selectedItem.accepted} Accepted
-                </span>
+                <StatusPill status="approved" label={`${selectedItem.accepted} Accepted`} />
                 <span className={styles.modalAmount}>{formatAda(selectedItem.adaEarned)}</span>
               </div>
-              <button type="button" className={styles.closeBtn} onClick={handleCloseModal} aria-label="Close modal">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+              <ModalCloseButton onClose={handleCloseModal} size={20} />
             </div>
             
             <div className={styles.modalBody}>
               <h3 id="modal-title" className={styles.modalTitle}>Hunter Profile</h3>
               
               <div className={styles.submitterInfo}>
-                <div className={styles.avatar} aria-hidden="true">{getInitials(selectedItem.wallet)}</div>
+                <InitialsAvatar name={selectedItem.wallet} />
                 <span className={styles.handle} style={{ fontSize: '14px' }}>{shortId(selectedItem.wallet)}</span>
                 
                 <div className={styles.hashGroup}>
-                  <button type="button" className={styles.copyBtn} aria-label="Copy hunter address" aria-live="polite" data-copied={copyStatus === "copied"} onClick={() => void handleCopyHash(selectedItem.wallet)}>
-                    {copyStatus === "copied" ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    ) : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    )}
-                  </button>
+                  <CopyIconButton
+                    text={selectedItem.wallet}
+                    label="Copy hunter address"
+                    className={styles.copyBtn}
+                  />
                 </div>
               </div>
 
@@ -411,7 +311,7 @@ export function AdminHuntersPage() {
                         <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '250px' }}>
                           {getSubmissionBounty(s)?.title || "Unknown Bounty"}
                         </span>
-                        <span className={styles.statusPill} data-status={s.status.toLowerCase()}>{normalizeStatus(s.status)}</span>
+                        <StatusPill status={s.status} />
                       </div>
                     ))}
                     {selectedItem.submissions.length > 5 && (
@@ -425,14 +325,13 @@ export function AdminHuntersPage() {
             </div>
 
             <div className={styles.modalFooter}>
-              <div className={styles.navControls}>
-                <button type="button" className={styles.navBtn} disabled={!canGoPrev} aria-label="Previous hunter" onClick={() => setSelectedHunterKey(items[selectedIndex - 1]?.key || null)}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <button type="button" className={styles.navBtn} disabled={!canGoNext} aria-label="Next hunter" onClick={() => setSelectedHunterKey(items[selectedIndex + 1]?.key || null)}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-              </div>
+              <ModalNavControls
+                itemLabel="hunter"
+                canGoPrev={canGoPrev}
+                canGoNext={canGoNext}
+                onPrev={goToPrev}
+                onNext={goToNext}
+              />
 
               <button type="button" className={styles.rejectBtn} disabled>
                 Suspend Account

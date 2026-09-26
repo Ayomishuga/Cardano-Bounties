@@ -2,15 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { authFetch } from "@/lib/api";
+import type { UserProfile } from "@/types/bounty";
 import styles from "./page.module.css";
 
-type UserProfile = {
-  id: string;
-  stake_address: string;
-  role: string;
-  display_name: string | null;
-  bio: string | null;
-};
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
