@@ -1,6 +1,6 @@
-import { PLATFORM_FEE_RATE } from "@/lib/bountyContract";
+import { PLATFORM_FEE_RATE, LOVELACE_PER_ADA } from "@/lib/bountyContract";
 
-export const LOVELACE_PER_ADA = 1_000_000;
+export { LOVELACE_PER_ADA };
 
 export function adaToLovelace(value: string | number) {
   const normalized = String(value).trim();

@@ -5,32 +5,24 @@ import Link from "next/link";
 import { authFetch } from "@/lib/api";
 import { ContentWithLinks } from "@/components/shared/ContentWithLinks";
 import styles from "./AdminQueue.module.css";
-import { AdminTableBodyShimmer } from "@/components/dashboard/ShimmerLoaders";
-
-type Bounty = {
-  id: string;
-  title: string;
-  description?: string | null;
-  bounty_instructions?: string | null;
-  reward_amount?: number | string | null;
-  type?: string | null;
-  custom_type?: string | null;
-  status?: string | null;
-  deadline?: string | null;
-  project_name?: string | null;
-  project_logo_url?: string | null;
-  payout_type?: string | null;
-  max_winners?: number | null;
-};
-
-type Allocation = {
-  id: string;
-  amount_lovelace: number | string;
-  rank?: number | null;
-  status: string;
-  transaction_hash?: string | null;
-  paid_at?: string | null;
-};
+import type { Bounty, PayoutAllocation } from "@/types/bounty";
+import {
+  formatAda,
+  formatLovelaceAsAda,
+  normalizeStatus,
+  shortId,
+  formatDateTime,
+  formatRelativeTime,
+} from "@/lib/formatters";
+import { getBountyCategoryLabel } from "@/lib/bountyHelpers";
+import { CopyIconButton } from "@/components/shared/CopyIconButton";
+import { StatusPill } from "@/components/shared/StatusPill";
+import { InitialsAvatar } from "@/components/shared/InitialsAvatar";
+import { ModalCloseButton } from "@/components/shared/ModalCloseButton";
+import { ModalNavControls } from "@/components/shared/ModalNavControls";
+import { useItemNavigation } from "@/hooks/useItemNavigation";
+import { DataTable, type ColumnDef } from "@/components/shared/DataTable";
+import { TableActionChevron } from "@/components/shared/TableActionChevron";
 
 type Contribution = {
   id: string;
@@ -44,7 +36,7 @@ type Contribution = {
   reviewed_at?: string | null;
   transaction_hash?: string | null;
   bounties?: Bounty | Bounty[] | null;
-  allocations?: Allocation[];
+  allocations?: PayoutAllocation[];
 };
 
 type ContributorResponse = {
@@ -59,52 +51,6 @@ type ContributorResponse = {
 function getContributionBounty(contribution: Contribution) {
   if (Array.isArray(contribution.bounties)) return contribution.bounties[0] || null;
   return contribution.bounties || null;
-}
-
-function formatAda(value: number | string | null | undefined) {
-  const amount = Number(value || 0);
-  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 6 }).format(amount)} ADA`;
-}
-
-function formatLovelaceAsAda(value: number | string | null | undefined) {
-  return formatAda(Number(value || 0) / 1_000_000);
-}
-
-function normalizeStatus(value: string | null | undefined) {
-  if (!value) return "Pending";
-  return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function shortId(value: string | null | undefined) {
-  if (!value) return "Unknown";
-  if (value.length <= 16) return value;
-  return `${value.slice(0, 10)}...${value.slice(-6)}`;
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "Not recorded";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not recorded";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
-function formatRelativeTime(value: string | null | undefined) {
-  if (!value) return "Not recorded";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not recorded";
-  const seconds = Math.max(1, Math.floor((Date.now() - date.getTime()) / 1000));
-  if (seconds < 60) return "Just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
 }
 
 function getContributionState(contribution: Contribution) {
@@ -125,10 +71,6 @@ function getPayoutLabel(contribution: Contribution) {
   return `${formatLovelaceAsAda(allocation.amount_lovelace)} - ${normalizeStatus(allocation.status)}`;
 }
 
-function getBountyTypeLabel(bounty: Bounty | null) {
-  return normalizeStatus(bounty?.custom_type || bounty?.type || "General");
-}
-
 export function ContributorContributionsPage() {
   const [data, setData] = useState<ContributorResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -138,7 +80,6 @@ export function ContributorContributionsPage() {
   const [sortCol, setSortCol] = useState<"bounty" | "submitted" | "status" | "payout">("submitted");
   const [sortDesc, setSortDesc] = useState(true);
   const [selectedContributionId, setSelectedContributionId] = useState<string | null>(null);
-  const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
 
   const loadContributions = useCallback(async () => {
     setIsLoading(true);
@@ -214,13 +155,11 @@ export function ContributorContributionsPage() {
     return list;
   }, [contributions, filter, search, sortCol, sortDesc]);
 
-  const selectedItem = useMemo(
-    () => items.find((contribution) => contribution.id === selectedContributionId) || null,
-    [items, selectedContributionId],
+  const { selectedItem, canGoPrev, canGoNext, goToPrev, goToNext } = useItemNavigation(
+    items,
+    selectedContributionId,
+    setSelectedContributionId
   );
-  const selectedIndex = items.findIndex((contribution) => contribution.id === selectedContributionId);
-  const canGoPrev = selectedIndex > 0;
-  const canGoNext = selectedIndex !== -1 && selectedIndex < items.length - 1;
 
   const summaryItems = [
     ["Total", data?.metrics?.total_submissions || 0],
@@ -238,20 +177,67 @@ export function ContributorContributionsPage() {
     }
   }
 
-  function renderSortIndicator(col: typeof sortCol) {
-    if (sortCol !== col) return null;
-    return sortDesc ? " ↓" : " ↑";
-  }
-
-  async function handleCopy(value: string) {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopyStatus("copied");
-      window.setTimeout(() => setCopyStatus("idle"), 1500);
-    } catch (err) {
-      console.error(err);
-    }
-  }
+  const columns = useMemo<ColumnDef<Contribution>[]>(
+    () => [
+      {
+        id: "bounty",
+        header: "Bounty",
+        sortable: true,
+        cell: (contribution) => {
+          const bounty = getContributionBounty(contribution);
+          return (
+            <>
+              <span className={styles.bountyTitle} title={bounty?.title}>{bounty?.title || "Unknown bounty"}</span>
+              <div className={styles.date}>{getBountyCategoryLabel(bounty)}</div>
+            </>
+          );
+        },
+      },
+      {
+        id: "submitted",
+        header: "Submitted",
+        sortable: true,
+        cell: (contribution) => (
+          <span className={styles.date} title={contribution.submitted_at ? new Date(contribution.submitted_at).toLocaleString() : undefined}>
+            {formatRelativeTime(contribution.submitted_at)}
+          </span>
+        ),
+      },
+      {
+        id: "status",
+        header: "Status",
+        sortable: true,
+        cell: (contribution) => (
+          <StatusPill
+            status={getContributionState(contribution)}
+            label={getContributionState(contribution)}
+          />
+        ),
+      },
+      {
+        id: "payout",
+        header: "Payout",
+        align: "right",
+        sortable: true,
+        cell: (contribution) => {
+          const allocation = contribution.allocations?.[0];
+          return (
+            <div className={styles.amount}>
+              {allocation ? formatLovelaceAsAda(allocation.amount_lovelace) : "Not allocated"}
+            </div>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        align: "right",
+        sortable: false,
+        cell: () => <TableActionChevron ariaLabel="View contribution" icon="eye" />,
+      },
+    ],
+    []
+  );
 
   return (
     <div className={styles.container}>
@@ -305,115 +291,36 @@ export function ContributorContributionsPage() {
         </div>
       </div>
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table} role="grid" aria-label="My contributions">
-          <thead>
-            <tr>
-              <th data-sortable="true" onClick={() => handleSort("bounty")} aria-sort={sortCol === "bounty" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={styles.thContent}>Bounty {renderSortIndicator("bounty")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("submitted")} aria-sort={sortCol === "submitted" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={styles.thContent}>Submitted {renderSortIndicator("submitted")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("status")} aria-sort={sortCol === "status" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={styles.thContent}>Status {renderSortIndicator("status")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("payout")} aria-sort={sortCol === "payout" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={`${styles.thContent} ${styles.right}`}>Payout {renderSortIndicator("payout")}</div>
-              </th>
-              <th><div className={`${styles.thContent} ${styles.right}`}>Actions</div></th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <AdminTableBodyShimmer columns={6} rows={5} />
-            ) : error ? (
-              <tr>
-                <td colSpan={5}>
-                  <div className={styles.emptyState}>
-                    <h3>Could not load contributions</h3>
-                    <p>{error}</p>
-                    <button type="button" className={styles.clearFilterBtn} onClick={() => void loadContributions()}>Retry</button>
-                  </div>
-                </td>
-              </tr>
-            ) : items.length === 0 ? (
-              <tr>
-                <td colSpan={5}>
-                  <div className={styles.emptyState}>
-                    <h3>{search || filter !== "all" ? "No matching contributions" : "No contributions yet"}</h3>
-                    <p>{search || filter !== "all" ? "No submissions match your current filters." : "Bounties you submit work to will appear here."}</p>
-                    {search || filter !== "all" ? (
-                      <button type="button" className={styles.clearFilterBtn} onClick={() => { setSearch(""); setFilter("all"); }}>Clear filters</button>
-                    ) : (
-                      <Link href="/explore" className={styles.clearFilterBtn}>Explore bounties</Link>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              items.map((contribution) => {
-                const bounty = getContributionBounty(contribution);
-                const allocation = contribution.allocations?.[0];
-
-                return (
-                  <tr
-                    key={contribution.id}
-                    onClick={() => setSelectedContributionId(contribution.id)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        setSelectedContributionId(contribution.id);
-                      }
-                    }}
-                  >
-                    <td>
-                      <span className={styles.bountyTitle} title={bounty?.title}>{bounty?.title || "Unknown bounty"}</span>
-                      <div className={styles.date}>{getBountyTypeLabel(bounty)}</div>
-                    </td>
-                    <td>
-                      <span className={styles.date} title={contribution.submitted_at ? new Date(contribution.submitted_at).toLocaleString() : undefined}>
-                        {formatRelativeTime(contribution.submitted_at)}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={styles.statusPill} data-status={getContributionState(contribution).toLowerCase().replace(/\s+/g, "_")}>
-                        {getContributionState(contribution)}
-                      </span>
-                    </td>
-                    <td>
-                      <div className={styles.amount}>{allocation ? formatLovelaceAsAda(allocation.amount_lovelace) : "Not allocated"}</div>
-                    </td>
-                    <td>
-                      <div className={styles.actions}>
-                        <button type="button" aria-label="View contribution" tabIndex={-1} style={{ background: "transparent", border: "none", cursor: "pointer", color: "inherit" }}>
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={items}
+        columns={columns}
+        ariaLabel="My contributions"
+        sortCol={sortCol}
+        sortDesc={sortDesc}
+        onSort={handleSort}
+        onRowClick={(contribution) => setSelectedContributionId(contribution.id)}
+        isLoading={isLoading}
+        error={error}
+        onRetry={() => void loadContributions()}
+        emptyState={{
+          title: search || filter !== "all" ? "No matching contributions" : "No contributions yet",
+          description: search || filter !== "all" ? "No submissions match your current filters." : "Bounties you submit work to will appear here.",
+          action: search || filter !== "all" ? (
+            <button type="button" className={styles.clearFilterBtn} onClick={() => { setSearch(""); setFilter("all"); }}>Clear filters</button>
+          ) : (
+            <Link href="/explore" className={styles.clearFilterBtn}>Explore bounties</Link>
+          ),
+        }}
+      />
 
       {selectedItem ? (
         <ContributionModal
           canGoNext={canGoNext}
           canGoPrev={canGoPrev}
           contribution={selectedItem}
-          copyStatus={copyStatus}
           onClose={() => setSelectedContributionId(null)}
-          onCopy={handleCopy}
-          onNext={() => setSelectedContributionId(items[selectedIndex + 1]?.id || null)}
-          onPrev={() => setSelectedContributionId(items[selectedIndex - 1]?.id || null)}
+          onNext={goToNext}
+          onPrev={goToPrev}
         />
       ) : null}
     </div>
@@ -424,18 +331,14 @@ function ContributionModal({
   canGoNext,
   canGoPrev,
   contribution,
-  copyStatus,
   onClose,
-  onCopy,
   onNext,
   onPrev,
 }: {
   canGoNext: boolean;
   canGoPrev: boolean;
   contribution: Contribution;
-  copyStatus: "idle" | "copied";
   onClose: () => void;
-  onCopy: (value: string) => void;
   onNext: () => void;
   onPrev: () => void;
 }) {
@@ -447,35 +350,29 @@ function ContributionModal({
       <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="contribution-modal-title">
         <div className={styles.modalHeader}>
           <div className={styles.modalHeaderLeft}>
-            <span className={styles.statusPill} data-status={getContributionState(contribution).toLowerCase().replace(/\s+/g, "_")}>
-              {getContributionState(contribution)}
-            </span>
+            <StatusPill
+              status={getContributionState(contribution)}
+              label={getContributionState(contribution)}
+            />
             <span className={styles.modalAmount}>{formatAda(bounty?.reward_amount)}</span>
             <span className={styles.modalMetaPill}>{normalizeStatus(bounty?.payout_type || "single")}</span>
           </div>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close modal">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          <ModalCloseButton onClose={onClose} size={20} />
         </div>
 
         <div className={styles.modalBody}>
           <h3 id="contribution-modal-title" className={styles.modalTitle}>{bounty?.title || "Contribution"}</h3>
 
           <div className={styles.submitterInfo}>
-            <div className={styles.avatar} aria-hidden="true">{getInitials(getContributionState(contribution))}</div>
+            <InitialsAvatar name={getContributionState(contribution)} />
             <span className={styles.handle} style={{ fontSize: "14px" }}>{formatDateTime(contribution.submitted_at)}</span>
             <div className={styles.hashGroup}>
               <span>ID: {shortId(contribution.id)}</span>
-              <button type="button" className={styles.copyBtn} aria-label="Copy contribution ID" aria-live="polite" data-copied={copyStatus === "copied"} onClick={() => void onCopy(contribution.id)}>
-                {copyStatus === "copied" ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
-                )}
-              </button>
+              <CopyIconButton
+                text={contribution.id}
+                label="Copy contribution ID"
+                className={styles.copyBtn}
+              />
             </div>
           </div>
 
@@ -543,7 +440,7 @@ function ContributionModal({
               <div className={styles.contextMetaGrid}>
                 <div>
                   <span>Category</span>
-                  <strong>{getBountyTypeLabel(bounty)}</strong>
+                  <strong>{getBountyCategoryLabel(bounty)}</strong>
                 </div>
                 <div>
                   <span>Status</span>
@@ -574,14 +471,13 @@ function ContributionModal({
         </div>
 
         <div className={styles.modalFooter}>
-          <div className={styles.navControls}>
-            <button type="button" className={styles.navBtn} disabled={!canGoPrev} aria-label="Previous contribution" onClick={onPrev}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-            </button>
-            <button type="button" className={styles.navBtn} disabled={!canGoNext} aria-label="Next contribution" onClick={onNext}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-            </button>
-          </div>
+          <ModalNavControls
+            itemLabel="contribution"
+            canGoPrev={canGoPrev}
+            canGoNext={canGoNext}
+            onPrev={onPrev}
+            onNext={onNext}
+          />
           {bounty?.id ? (
             <Link href={`/bounties/${bounty.id}`} className={styles.clearFilterBtn}>
               View bounty
@@ -591,9 +487,4 @@ function ContributionModal({
       </div>
     </div>
   );
-}
-
-function getInitials(value: string | null | undefined) {
-  if (!value) return "?";
-  return value.slice(0, 2).toUpperCase();
 }

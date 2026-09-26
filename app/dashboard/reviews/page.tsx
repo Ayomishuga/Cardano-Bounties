@@ -7,8 +7,17 @@ import { authFetch } from "@/lib/api";
 import { ContentWithLinks } from "@/components/shared/ContentWithLinks";
 import styles from "@/app/pages/AdminQueue.module.css";
 import { type Bounty, type Submission } from "@/types/bounty";
-import { formatAda, formatLovelaceAsAda, normalizeStatus, formatDate, formatDateTime, shortId, formatRelativeTime, getInitials } from "@/lib/formatters";
+import { formatAda, formatLovelaceAsAda, normalizeStatus, formatDate, formatDateTime, shortId, formatRelativeTime } from "@/lib/formatters";
 import { getSubmissionBounty, getPayoutTypeLabel, getPayoutSummary, getBountyCategoryLabel } from "@/lib/bountyHelpers";
+import { CopyIconButton } from "@/components/shared/CopyIconButton";
+import { useEscapeKey } from "@/hooks/useEscapeKey";
+import { StatusPill } from "@/components/shared/StatusPill";
+import { InitialsAvatar } from "@/components/shared/InitialsAvatar";
+import { ModalCloseButton } from "@/components/shared/ModalCloseButton";
+import { ModalNavControls } from "@/components/shared/ModalNavControls";
+import { useItemNavigation } from "@/hooks/useItemNavigation";
+import { DataTable, type ColumnDef } from "@/components/shared/DataTable";
+import { TableActionChevron } from "@/components/shared/TableActionChevron";
 
 type PosterDashboardResponse = {
   queues?: {
@@ -39,7 +48,6 @@ export default function ReviewsPage() {
   
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
   const [actionId, setActionId] = useState("");
-  const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
   const [contextOpen, setContextOpen] = useState(true);
   const [reviewNote, setReviewNote] = useState("");
 
@@ -107,11 +115,15 @@ export default function ReviewsPage() {
     return list;
   }, [data, search, sortCol, sortDesc]);
 
-  const selectedItem = useMemo(() => items.find((s) => s.id === selectedSubmissionId) || null, [items, selectedSubmissionId]);
+  const { selectedItem, canGoPrev, canGoNext, goToPrev, goToNext } = useItemNavigation(
+    items,
+    selectedSubmissionId,
+    (id) => {
+      setSelectedSubmissionId(id);
+      setContextOpen(true);
+    }
+  );
   const selectedBounty = selectedItem ? getSubmissionBounty(selectedItem) : null;
-  const selectedIndex = items.findIndex((s) => s.id === selectedSubmissionId);
-  const canGoPrev = selectedIndex > 0;
-  const canGoNext = selectedIndex !== -1 && selectedIndex < items.length - 1;
 
   useEffect(() => {
     if (selectedItem) {
@@ -141,25 +153,7 @@ export default function ReviewsPage() {
     setSelectedSubmissionId(null);
   };
 
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && selectedSubmissionId) {
-        handleCloseModal();
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [selectedSubmissionId]);
-
-  const handleCopyHash = async (hash: string) => {
-    try {
-      await navigator.clipboard.writeText(hash);
-      setCopyStatus("copied");
-      setTimeout(() => setCopyStatus("idle"), 1500);
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  useEscapeKey(handleCloseModal, Boolean(selectedSubmissionId));
 
   const runReviewAction = async (status: "recommended_approval" | "changes_requested", label: string) => {
     if (!selectedItem) return;
@@ -189,11 +183,6 @@ export default function ReviewsPage() {
     }
   };
 
-  const renderSortIndicator = (col: typeof sortCol) => {
-    if (sortCol !== col) return null;
-    return sortDesc ? " ↓" : " ↑";
-  };
-
   if (!isAuthenticated) {
     return (
       <div className={styles.container}>
@@ -220,6 +209,66 @@ export default function ReviewsPage() {
     );
   }
 
+  const columns = useMemo<ColumnDef<Submission>[]>(
+    () => [
+      {
+        id: "title",
+        header: "Bounty",
+        sortable: true,
+        cell: (submission) => {
+          const bounty = getSubmissionBounty(submission);
+          return (
+            <span className={styles.bountyTitle} title={bounty?.title}>
+              {bounty?.title || "Unknown Bounty"}
+            </span>
+          );
+        },
+      },
+      {
+        id: "submitter",
+        header: "Submitter",
+        sortable: true,
+        cell: (submission) => {
+          const handle = shortId(submission.contributor_id);
+          return (
+            <div className={styles.submitter}>
+              <InitialsAvatar name={handle} />
+              <span className={styles.handle} title={submission.contributor_id || ""}>
+                {handle}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        id: "status",
+        header: "Status",
+        sortable: true,
+        cell: (submission) => (
+          <StatusPill status={submission.poster_review_status || submission.status} />
+        ),
+      },
+      {
+        id: "date",
+        header: "Date",
+        sortable: true,
+        cell: (submission) => (
+          <span className={styles.date} title={submission.submitted_at ? new Date(submission.submitted_at).toLocaleString() : undefined}>
+            {formatRelativeTime(submission.submitted_at)}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        align: "right",
+        sortable: false,
+        cell: () => <TableActionChevron ariaLabel="Review submission" icon="eye" />,
+      },
+    ],
+    []
+  );
+
   return (
     <div className={styles.container}>
       <div className={styles.controls}>
@@ -238,127 +287,34 @@ export default function ReviewsPage() {
         </div>
       </div>
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table} role="grid" aria-label="Submission Reviews">
-          <thead>
-            <tr>
-              <th data-sortable="true" onClick={() => handleSort("title")} aria-sort={sortCol === "title" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={styles.thContent}>Bounty {renderSortIndicator("title")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("submitter")} aria-sort={sortCol === "submitter" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={styles.thContent}>Submitter {renderSortIndicator("submitter")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("status")} aria-sort={sortCol === "status" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={styles.thContent}>Status {renderSortIndicator("status")}</div>
-              </th>
-              <th data-sortable="true" onClick={() => handleSort("date")} aria-sort={sortCol === "date" ? (sortDesc ? "descending" : "ascending") : "none"}>
-                <div className={styles.thContent}>Date {renderSortIndicator("date")}</div>
-              </th>
-              <th><div className={`${styles.thContent} ${styles.right}`}>Actions</div></th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} aria-hidden="true">
-                  <td><div className={styles.shimmer} style={{ width: '180px' }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: '120px' }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: '80px', borderRadius: '999px' }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: '70px' }} /></td>
-                  <td><div className={styles.shimmer} style={{ width: '24px', marginLeft: 'auto' }} /></td>
-                </tr>
-              ))
-            ) : error ? (
-              <tr>
-                <td colSpan={5}>
-                  <div className={styles.emptyState}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="8" x2="12" y2="12" />
-                      <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                    <h3>Could not load reviews</h3>
-                    <p>{error}</p>
-                    <button type="button" className={styles.clearFilterBtn} onClick={() => void loadReviews()}>Retry</button>
-                  </div>
-                </td>
-              </tr>
-            ) : items.length === 0 ? (
-              <tr>
-                <td colSpan={5}>
-                  <div className={styles.emptyState}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                      <line x1="3" y1="9" x2="21" y2="9" />
-                      <line x1="9" y1="21" x2="9" y2="9" />
-                    </svg>
-                    {search ? (
-                      <>
-                        <h3>No matching submissions</h3>
-                        <p>No submissions match your search.</p>
-                        <button type="button" className={styles.clearFilterBtn} onClick={() => setSearch("")}>Clear search</button>
-                      </>
-                    ) : (
-                      <>
-                        <h3>All caught up</h3>
-                        <p>You have no submissions awaiting your review.</p>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              items.map((submission) => {
-                const bounty = getSubmissionBounty(submission);
-                const handle = shortId(submission.contributor_id);
-                
-                return (
-                  <tr key={submission.id} onClick={() => handleRowClick(submission.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleRowClick(submission.id); } }}>
-                    <td>
-                      <span className={styles.bountyTitle} title={bounty?.title}>{bounty?.title || "Unknown Bounty"}</span>
-                    </td>
-                    <td>
-                      <div className={styles.submitter}>
-                        <div className={styles.avatar} aria-hidden="true">{getInitials(handle)}</div>
-                        <span className={styles.handle} title={submission.contributor_id || ""}>{handle}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={styles.statusPill} data-status={(submission.poster_review_status || submission.status).toLowerCase()}>
-                        {normalizeStatus(submission.poster_review_status || submission.status)}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={styles.date} title={submission.submitted_at ? new Date(submission.submitted_at).toLocaleString() : undefined}>
-                        {formatRelativeTime(submission.submitted_at)}
-                      </span>
-                    </td>
-                    <td>
-                      <div className={styles.actions}>
-                        <button type="button" aria-label="Review submission" tabIndex={-1} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit' }}>
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={items}
+        columns={columns}
+        ariaLabel="Submission Reviews"
+        sortCol={sortCol}
+        sortDesc={sortDesc}
+        onSort={handleSort}
+        onRowClick={(submission) => handleRowClick(submission.id)}
+        isLoading={isLoading}
+        error={error}
+        onRetry={() => void loadReviews()}
+        emptyState={{
+          title: search ? "No matching submissions" : "All caught up",
+          description: search ? "No submissions match your search." : "You have no submissions awaiting your review.",
+          action: search ? (
+            <button type="button" className={styles.clearFilterBtn} onClick={() => setSearch("")}>
+              Clear search
+            </button>
+          ) : undefined,
+        }}
+      />
 
       {selectedItem && (
         <div className={styles.modalBackdrop} onClick={(e) => { if (e.target === e.currentTarget) handleCloseModal(); }}>
           <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <div className={styles.modalHeader}>
               <div className={styles.modalHeaderLeft}>
-                <span className={styles.statusPill} data-status={(selectedItem.poster_review_status || selectedItem.status).toLowerCase()}>
-                  {normalizeStatus(selectedItem.poster_review_status || selectedItem.status)}
-                </span>
+                <StatusPill status={selectedItem.poster_review_status || selectedItem.status} />
                 <span className={styles.modalAmount}>{formatAda(selectedBounty?.reward_amount)}</span>
                 <span className={styles.modalMetaPill}>{getPayoutTypeLabel(selectedBounty?.payout_type)}</span>
                 <span style={{ fontSize: 11, color: "var(--muted)", whiteSpace: "nowrap" }}>
@@ -367,30 +323,23 @@ export default function ReviewsPage() {
                   <span style={{ color: "var(--status-success-text)" }}>{getBountyApprovedCount(selectedBounty)} recommended</span>
                 </span>
               </div>
-              <button type="button" className={styles.closeBtn} onClick={handleCloseModal} aria-label="Close modal">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+              <ModalCloseButton onClose={handleCloseModal} size={20} />
             </div>
             
             <div className={styles.modalBody}>
               <h3 id="modal-title" className={styles.modalTitle}>{selectedBounty?.title || "Submission"}</h3>
               
               <div className={styles.submitterInfo}>
-                <div className={styles.avatar} aria-hidden="true">{getInitials(shortId(selectedItem.contributor_id))}</div>
+                <InitialsAvatar name={shortId(selectedItem.contributor_id)} />
                 <span className={styles.handle} style={{ fontSize: '14px' }}>{shortId(selectedItem.contributor_id)}</span>
                 
                 <div className={styles.hashGroup}>
                   <span>ID: {shortId(selectedItem.id)}</span>
-                  <button type="button" className={styles.copyBtn} aria-label="Copy submission ID" aria-live="polite" data-copied={copyStatus === "copied"} onClick={() => void handleCopyHash(selectedItem.id)}>
-                    {copyStatus === "copied" ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    ) : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    )}
-                  </button>
+                  <CopyIconButton
+                    text={selectedItem.id}
+                    label="Copy submission ID"
+                    className={styles.copyBtn}
+                  />
                 </div>
               </div>
 
@@ -527,14 +476,13 @@ export default function ReviewsPage() {
             </div>
 
             <div className={styles.modalFooter}>
-              <div className={styles.navControls}>
-                <button type="button" className={styles.navBtn} disabled={!canGoPrev} aria-label="Previous submission" onClick={() => handleRowClick(items[selectedIndex - 1]?.id || "")}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <button type="button" className={styles.navBtn} disabled={!canGoNext} aria-label="Next submission" onClick={() => handleRowClick(items[selectedIndex + 1]?.id || "")}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-              </div>
+              <ModalNavControls
+                itemLabel="submission"
+                canGoPrev={canGoPrev}
+                canGoNext={canGoNext}
+                onPrev={goToPrev}
+                onNext={goToNext}
+              />
 
               <button type="button" className={styles.rejectBtn} disabled={actionId === selectedItem.id} onClick={() => void runReviewAction("changes_requested", "Submission marked for changes.")}>
                 {actionId === selectedItem.id ? <div className={styles.spinner} /> : "Request Changes"}

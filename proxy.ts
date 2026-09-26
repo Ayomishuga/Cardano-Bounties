@@ -22,14 +22,7 @@ const adminRoutes = [
 export function proxy(req: NextRequest) {
     const { pathname } = req.nextUrl
 
-    // Strip any client-supplied x-user-* headers to prevent spoofing.
-    // These are only set by this proxy after JWT verification.
-    const sanitizedHeaders = new Headers(req.headers)
-    sanitizedHeaders.delete('x-user-id')
-    sanitizedHeaders.delete('x-user-role')
-    sanitizedHeaders.delete('x-user-address')
-    const sanitizedReq = req.clone()
-    Object.defineProperty(sanitizedReq, 'headers', { value: sanitizedHeaders })
+
 
     // GET /api/bounties is public
     // POST /api/bounties requires auth
@@ -63,7 +56,12 @@ export function proxy(req: NextRequest) {
                 // Invalid token on public route: proceed without auth headers
             }
         }
-        return NextResponse.next()
+        // Strip any spoofed x-user-* headers on public routes
+        const cleanHeaders = new Headers(req.headers)
+        cleanHeaders.delete('x-user-id')
+        cleanHeaders.delete('x-user-role')
+        cleanHeaders.delete('x-user-address')
+        return NextResponse.next({ request: { headers: cleanHeaders } })
     }
     
     // Get token from Authorization header

@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { LOVELACE_PER_ADA, SUBMISSION_STATUS } from "@/lib/bountyContract";
 import { supabaseAdmin } from "@/lib/supabase";
+import type { PayoutAllocation } from "@/types/bounty";
 
-type Allocation = {
-  id: string;
-  submission_id: string;
-  amount_lovelace: number | string;
-  rank?: number | null;
-  status: string;
-  transaction_hash?: string | null;
-  paid_at?: string | null;
-};
+type Allocation = PayoutAllocation;
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const userId = req.headers.get("x-user-id");

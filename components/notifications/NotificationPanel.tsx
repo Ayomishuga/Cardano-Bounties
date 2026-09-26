@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Notification } from "@/hooks/useNotifications";
+import { formatRelativeTime } from "@/lib/formatters";
+import { useEscapeKey } from "@/hooks/useEscapeKey";
 import styles from "./NotificationPanel.module.css";
 
 const typeIcons: Record<string, string> = {
@@ -13,16 +15,6 @@ const typeIcons: Record<string, string> = {
   new_submission: "📬",
   payment_released: "💸",
 };
-
-function formatRelativeTime(value: string) {
-  const seconds = Math.max(1, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
-  if (seconds < 60) return "Just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
 
 type Props = {
   notifications: Notification[];
@@ -64,15 +56,7 @@ export function NotificationPanel({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [isOpen, onClose]);
 
-  // Close on Escape
-  useEffect(() => {
-    if (!isOpen) return;
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [isOpen, onClose]);
+  useEscapeKey(onClose, isOpen);
 
   if (!isOpen || !mounted) return null;
 

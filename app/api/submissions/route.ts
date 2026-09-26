@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { createNotification } from "@/lib/notifications";
+import { isPastDeadline } from "@/features/bounties/domain/bountyLifecycle";
 
 async function getContributorProfile(contributorId: string) {
   const { data } = await supabaseAdmin
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
 
   const { data: bounty, error: bountyError } = await supabaseAdmin
     .from("bounties")
-    .select("id, status, title, created_by")
+    .select("id, status, title, created_by, deadline")
     .eq("id", bounty_id)
     .single();
 
@@ -97,6 +98,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (isPastDeadline(bounty.deadline)) {
+    return NextResponse.json(
+      { error: "This bounty deadline has passed and is no longer accepting submissions" },
+      { status: 400 },
+    );
+  }
+
   if (bounty.created_by === contributorId) {
     return NextResponse.json(
       { error: 'You cannot submit to your own bounty' },
@@ -106,7 +114,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from("submissions")
-    .insert({ bounty_id, contributor_id: contributorId, content }) // ← fixed
+    .insert({ bounty_id, contributor_id: contributorId, content })
     .select()
     .single();
 
